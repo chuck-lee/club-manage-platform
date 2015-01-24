@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import permission_required
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 
@@ -35,19 +36,22 @@ def budget(request, year):
     ).order_by('-type', 'category')
     budgetList = []
     for budget in budgets:
-        budget_last_year = Budget.objects.filter(
-            year = int(year) - 1,
-            type = budget.type,
-            category = budget.category,
-            subCategory = budget.subCategory
-        ).aggregate(amount=Sum('amount'))
+        try:
+            budget_last_year = Budget.objects.get(
+                year = int(year) - 1,
+                type = budget.type,
+                category = budget.category,
+                subCategory = budget.subCategory
+            )
 
-        transaction_last_year = Transaction.objects.filter(
-            date__year = int(year) - 1,
-            type = budget.type,
-            category = budget.category,
-            subCategory = budget.subCategory
-        ).aggregate(amount=Sum('amount'))
+            transaction_last_year = Transaction.objects.filter(
+                date__year = int(year) - 1,
+                budget = budget_last_year,
+            ).aggregate(amount=Sum('amount'))['amount']
+
+            budget_last_year = budget_last_year.amount
+        except ObjectDoesNotExist:
+            budget_last_year = 0
 
         budgetList.append({
             'id': budget.id,
@@ -55,8 +59,8 @@ def budget(request, year):
             'category': budget.category.name,
             'subCategory': budget.subCategory.name if budget.subCategory != None else '',
             'amount': budget.amount,
-            'last_transaction': transaction_last_year['amount'] if transaction_last_year['amount'] != None else 0,
-            'last_budget': budget_last_year['amount'] if budget_last_year['amount'] != None else 0,
+            'last_transaction': transaction_last_year if transaction_last_year != None else 0,
+            'last_budget': budget_last_year if budget_last_year != None else 0,
         })
 
     context = {
@@ -68,16 +72,20 @@ def budget(request, year):
 class AddBudget(CreateView):
     template_name = 'finance/budget/add.html'
     model = Budget
-    fields = '__all__'
+    form_class = BudgetForm
 
     @method_decorator(permission_required('finance.add_budget', raise_exception=True))
     def dispatch(self, *args, **kwargs):
         return super(AddBudget, self).dispatch(*args, **kwargs)
 
+    def form_valid(self, form):
+        print(form.instance)
+        return super(AddBudget, self).form_valid(form)
+
 class ChangeBudget(UpdateView):
     template_name = 'finance/budget/change.html'
     model = Budget
-    fields = '__all__'
+    form_class = BudgetForm
 
     @method_decorator(permission_required('finance.change_budget', raise_exception=True))
     def dispatch(self, *args, **kwargs):
@@ -106,7 +114,6 @@ class DuplicateBudget(FormView):
     form_class = DuplicateBudgetForm
 
     def form_valid(self, form):
-        print(form.cleaned_data)
         budgets = Budget.objects.filter(
             year = form.cleaned_data['fromYear']
         ).order_by('-type', 'category')
@@ -141,9 +148,19 @@ def transactionIndex(request):
     return render(request, 'finance/transaction/index.html', context)
 
 def transactionYear(request, year):
-    previous_total = Transaction.objects.filter(
-        date__lt = datetime(int(year), 1, 1)
-    ).aggregate(total=Sum('amount', field="type*amount"))['total']
+    previous_income = Transaction.objects.filter(
+            date__lt = datetime(int(year), 1, 1),
+            budget__type = 1
+        ).aggregate(total=Sum('amount'))['total']
+    previous_income = int(previous_income) if previous_income != None else 0
+
+    previous_expense = Transaction.objects.filter(
+            date__lt = datetime(int(year), 1, 1),
+            budget__type = -1
+        ).aggregate(total=Sum('amount'))['total']
+    previous_expense = int(previous_expense) if previous_expense != None else 0
+
+    previous_total = previous_income - previous_expense
 
     transactions = Transaction.objects.filter(
         date__year = int(year)
@@ -157,25 +174,35 @@ def transactionYear(request, year):
                     str(transaction.date.month) + '/' +
                     str(transaction.date.day),
             'serial': transaction.documentSerial,
-            'category': transaction.category.name,
-            'subCategory': transaction.subCategory.name if transaction.subCategory != None else '',
-            'amount': transaction.type * transaction.amount,
+            'category': transaction.budget.category.name,
+            'subCategory': transaction.budget.subCategory.name if transaction.budget.subCategory != None else '',
+            'amount': transaction.budget.type * transaction.amount,
             'payee': transaction.payee.name if request.user.is_authenticated() and transaction.payee != None else '',
             'comment': transaction.comment if request.user.is_authenticated() and transaction.comment != None else '',
         })
 
     context = {
         'year': year,
-        'previous_total': previous_total if previous_total else 0,
+        'previous_total': previous_total,
         'transactionList': transactionList,
     }
 
     return render(request, 'finance/transaction/table.html', context)
 
 def transactionYearMonth(request, year, month):
-    previous_total = Transaction.objects.filter(
-        date__lt = datetime(int(year), int(month), 1)
-    ).aggregate(total=Sum('amount', field="type*amount"))['total']
+    previous_income = Transaction.objects.filter(
+            date__lt = datetime(int(year), int(month), 1),
+            budget__type = 1
+        ).aggregate(total=Sum('amount'))['total']
+    previous_income = int(previous_income) if previous_income != None else 0
+
+    previous_expense = Transaction.objects.filter(
+            date__lt = datetime(int(year), int(month), 1),
+            budget__type = -1
+        ).aggregate(total=Sum('amount'))['total']
+    previous_expense = int(previous_expense) if previous_expense != None else 0
+
+    previous_total = previous_income - previous_expense
 
     transactions = Transaction.objects.filter(
         date__year = int(year),
@@ -190,27 +217,26 @@ def transactionYearMonth(request, year, month):
                     str(transaction.date.month) + '/' +
                     str(transaction.date.day),
             'serial': transaction.documentSerial,
+            'category': transaction.budget.category.name,
+            'subCategory': transaction.budget.subCategory.name if transaction.budget.subCategory != None else '',
+            'amount': transaction.budget.type * transaction.amount,
             'payee': transaction.payee.name if request.user.is_authenticated() and transaction.payee != None else '',
-            'category': transaction.category.name,
-            'subCategory': transaction.subCategory.name if transaction.subCategory != None else '',
-            'amount': transaction.type * transaction.amount,
             'comment': transaction.comment if request.user.is_authenticated() and transaction.comment != None else '',
         })
 
     context = {
         'year': year,
         'month': month,
-        'previous_total': previous_total if previous_total else 0,
+        'previous_total': previous_total,
         'transactionList': transactionList,
     }
 
-    return render(request, 'finance/transaction/table.html', context)
     return render(request, 'finance/transaction/table.html', context)
 
 class AddTransaction(CreateView):
     template_name = 'finance/transaction/add.html'
     model = Transaction
-    fields = '__all__'
+    form_class = TransactionForm
 
     @method_decorator(permission_required('finance.add_transaction', raise_exception=True))
     def dispatch(self, *args, **kwargs):
@@ -219,7 +245,7 @@ class AddTransaction(CreateView):
 class ChangeTransaction(UpdateView):
     template_name = 'finance/transaction/change.html'
     model = Transaction
-    fields = '__all__'
+    form_class = TransactionForm
 
     @method_decorator(permission_required('finance.change_transaction', raise_exception=True))
     def dispatch(self, *args, **kwargs):

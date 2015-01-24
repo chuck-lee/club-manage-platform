@@ -25,7 +25,7 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
+BROWSERID_AUDIENCES = ['https://club-manage-platform.herokuapp.com/']
 
 # Application definition
 

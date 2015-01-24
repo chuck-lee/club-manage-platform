@@ -52,6 +52,7 @@ def budget(request, year):
             budget_last_year = budget_last_year.amount
         except ObjectDoesNotExist:
             budget_last_year = 0
+            transaction_last_year = 0
 
         budgetList.append({
             'id': budget.id,

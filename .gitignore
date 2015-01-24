@@ -1,6 +1,6 @@
 VENV
 *.pyc
 __pycache__
-static
+staticfiles
 local_settings.py
 db.sqlite3

@@ -1,0 +1,8 @@
+{% extends "finance/base.html" %}
+
+{% block body %}
+    <h1>財務主頁</h1>
+    <a href="{% url "finance_budget_index" %}/">預算</a>
+    <br />
+    <a href="{% url "finance_transaction_index" %}/">收支報表</a>
+{% endblock %}

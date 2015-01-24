@@ -1,0 +1,199 @@
+{% extends "finance/base.html" %}
+
+{% block head %}
+    <script type="text/javascript">
+        function createRow(budget) {
+            var row = document.createElement("tr");
+            var rowEditable = false;
+
+            if (budget.subCategory.length > 0) {
+                row.appendChild(document.createElement("td"));
+                row.appendChild(document.createElement("td"));
+
+                var col = document.createElement("td");
+                col.style.textAlign = 'center';
+                col.appendChild(document.createTextNode(budget.subCategory));
+                row.appendChild(col);
+            } else if (budget.category.length > 0) {
+                row.appendChild(document.createElement("td"));
+
+                var col = document.createElement("td");
+                col.style.textAlign = 'center';
+                col.appendChild(document.createTextNode(budget.category));
+                row.appendChild(col);
+
+                row.appendChild(document.createElement("td"));
+            } else {
+                var col = document.createElement("td");
+                col.style.textAlign = 'center';
+                col.appendChild(document.createTextNode(budget.type));
+                row.appendChild(col);
+
+                row.appendChild(document.createElement("td"));
+                row.appendChild(document.createElement("td"));
+            }
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(budget.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(budget.last_transaction.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(budget.last_budget.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            {% if perms.finance.can_change_budget or perms.finance.can_delete_budget %}
+            var col = document.createElement("td");
+            if (budget.id) {
+                {% if perms.finance.can_change_budget %}
+                var a = document.createElement('a');
+                a.appendChild(document.createTextNode('修改'));
+                a.href = '{% url "finance_budget_change" pk=0 %}/'.replace(/0/, budget.id);
+                col.appendChild(a);
+
+                col.appendChild(document.createTextNode(' '));
+                {% endif %}
+
+                {% if perms.finance.can_delete_budget %}
+                var a = document.createElement('a');
+                a.appendChild(document.createTextNode('刪除'));
+                a.href = '{% url "finance_budget_delete" pk=0 %}/'.replace(/0/, budget.id);
+                col.appendChild(a);
+                {% endif %}
+            }
+            row.appendChild(col);
+            {% endif %}
+
+            return row;
+        }
+
+        function generateTable() {
+            var budgets = [
+                {% for budget in budgetList %}
+                {
+                    id: {{ budget.id }},
+                    type: '{{ budget.type }}',
+                    category: '{{ budget.category }}',
+                    subCategory: '{{ budget.subCategory }}',
+                    amount: {{ budget.amount }},
+                    last_transaction: {{ budget.last_transaction }},
+                    last_budget: {{ budget.last_budget }}
+                },
+                {% endfor %}
+            ];
+
+            var budgetList = {};
+            for (var i = 0; i < budgets.length; i++) {
+                budget = budgets[i];
+                var budgetType = budget.type;
+                var budgetCategory = budget.category;
+                if (!budgetList[budgetType]) {
+                    budgetList[budgetType] = {
+                        category: {},
+                        amount: 0,
+                        last_transaction: 0,
+                        last_budget: 0
+                    };
+                }
+
+                if (!budgetList[budgetType].category[budgetCategory]) {
+                    budgetList[budgetType].category[budgetCategory] = {
+                        id: budget.subCategory.length == 0 ? budget.id : null,
+                        subCategory: {},
+                        amount: 0,
+                        last_transaction: 0,
+                        last_budget: 0
+                    };
+                }
+
+                budgetList[budgetType].amount += budget.amount;
+                budgetList[budgetType].last_transaction += budget.last_transaction;
+                budgetList[budgetType].last_budget += budget.last_budget;
+                budgetList[budgetType].category[budgetCategory].amount += budget.amount;
+                budgetList[budgetType].category[budgetCategory].last_transaction += budget.last_transaction;
+                budgetList[budgetType].category[budgetCategory].last_budget += budget.last_budget;
+
+                if (budget.subCategory.length > 0) {
+                    budgetList[budgetType].category[budgetCategory].subCategory[budget.subCategory] = {
+                        id: budget.id,
+                        amount: budget.amount,
+                        last_transaction: budget.last_transaction,
+                        last_budget: budget.last_budget
+                    };
+                }
+            }
+
+            var tableElement = document.getElementById('budgetTable');
+            for (type in budgetList) {
+                var budgetTypeInfo = budgetList[type];
+                tableElement.appendChild(createRow({
+                    type: type,
+                    category: '',
+                    subCategory: '',
+                    amount: budgetTypeInfo.amount,
+                    last_transaction: budgetTypeInfo.last_transaction,
+                    last_budget: budgetTypeInfo.last_budget
+                }));
+
+                for (category in budgetList[type].category) {
+                    var budgetCategoryInfo = budgetTypeInfo.category[category];
+                    tableElement.appendChild(createRow({
+                        id: budgetCategoryInfo.id,
+                        type: type,
+                        category: category,
+                        subCategory: '',
+                        amount: budgetCategoryInfo.amount,
+                        last_transaction: budgetCategoryInfo.last_transaction,
+                        last_budget: budgetCategoryInfo.last_budget
+                    }));
+
+                    for (subCategory in budgetList[type].category[category].subCategory) {
+                        var budgetSubCategoryInfo = budgetTypeInfo.category[category].subCategory[subCategory];
+                        tableElement.appendChild(createRow({
+                            id: budgetSubCategoryInfo.id,
+                            type: type,
+                            category: category,
+                            subCategory: subCategory,
+                            amount: budgetSubCategoryInfo.amount,
+                            last_transaction: budgetSubCategoryInfo.last_transaction,
+                            last_budget: budgetSubCategoryInfo.last_budget
+                        }));
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('load', function onload() {
+            window.removeEventListener("load", onload, false);
+            generateTable();
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h1>{{ year }}年預算</h1>
+    <a href="{% url "finance_budget_index" %}">預算列表</a><br />
+    <br />
+
+    {% if perms.finance.can_add_budget %}
+    <a href="{% url "finance_budget_add" %}">新增預算</a>
+    {% endif %}
+
+    <table border="2" cellspacing="0" frame="box" rules="all" id="budgetTable">
+        <tr>
+            <th colspan="3">{{ year|add:"-1911" }}年度收支預算表</th>
+            <th>預算金額</th>
+            <th>{{ year|add:"-1912" }}年度執行</th>
+            <th>{{ year|add:"-1912" }}年度預算</th>
+            {% if perms.finance.can_change_budget or perms.finance.can_delete_budget %}
+            <th>操作</th>
+            {% endif %}
+        </tr>
+    </table>
+{% endblock %}

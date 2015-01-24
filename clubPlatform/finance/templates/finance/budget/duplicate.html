@@ -1,0 +1,13 @@
+{% extends "finance/base.html" %}
+
+{% block body %}
+    {% if perms.finance.can_add_budget %}
+    <h2>複製年度預算</h2>
+    <p>將 {{ form.fromYear.label_tag }} 的預算完全複製到 {{ form.toYear.label_tag }} </p>
+
+    <form action="" method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="建立" />
+    </form>
+    {% endif %}
+{% endblock %}

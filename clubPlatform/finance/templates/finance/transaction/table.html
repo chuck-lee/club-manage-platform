@@ -1,0 +1,163 @@
+{% extends "finance/base.html" %}
+
+{% block head %}
+    <script type="text/javascript">
+        function createRow(transaction) {
+            var row = document.createElement("tr");
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(transaction.date || ''));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(transaction.serial || ''));
+            row.appendChild(col);
+
+            if (transaction.amount > 0) {
+                var col = document.createElement("td");
+                col.style.textAlign = 'right';
+                col.appendChild(document.createTextNode(transaction.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+                row.appendChild(col);
+
+                row.appendChild(document.createElement("td"));
+            } else {
+                row.appendChild(document.createElement("td"));
+
+                var col = document.createElement("td");
+                col.style.textAlign = 'right';
+                col.appendChild(document.createTextNode((-transaction.amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+                row.appendChild(col);
+            }
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(transaction.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(transaction.category));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(transaction.subCategory || ''));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(transaction.payee || ''));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.appendChild(document.createTextNode(transaction.comment || ''));
+            row.appendChild(col);
+
+            {% if perms.finance.can_change_transaction or perms.finance.can_delete_transaction %}
+            if (transaction.id) {
+                var col = document.createElement("td");
+
+                {% if perms.finance.can_change_transaction %}
+                    var a = document.createElement('a');
+                    a.appendChild(document.createTextNode('修改'));
+                    a.href = '{% url "finance_transaction_change" pk=0 %}/'.replace(/0/, transaction.id);
+                    col.appendChild(a);
+
+                    col.appendChild(document.createTextNode(' '));
+                {% endif %}
+
+                {% if perms.finance.can_delete_transaction %}
+                    var a = document.createElement('a');
+                    a.appendChild(document.createTextNode('刪除'));
+                    a.href = '{% url "finance_transaction_delete" pk=0 %}/'.replace(/0/, transaction.id);
+                    col.appendChild(a);
+                {% endif %}
+
+                row.appendChild(col);
+            }
+            {% endif %}
+
+            return row;
+        }
+
+        function generateTable() {
+            var transactions = [
+                {% for transaction in transactionList %}
+                {
+                    id: {{ transaction.id }},
+                    date: '{{ transaction.date }}',
+                    serial: '{{ transaction.serial }}',
+                    payee: '{{ transaction.payee }}',
+                    category: '{{ transaction.category }}',
+                    subCategory: '{{ transaction.subCategory }}',
+                    amount: {{ transaction.amount }},
+                    comment: '{{ transaction.comment }}',
+                },
+                {% endfor %}
+            ];
+
+            var tableElement = document.getElementById('transactionTable');
+            var total = {{ previous_total }};
+            tableElement.appendChild(createRow({
+                category: '上期結餘',
+                amount: total,
+                total: total,
+            }));
+            for (var i = 0; i < transactions.length; i++) {
+                transaction = transactions[i];
+                total += transaction.amount;
+                transaction.total = total;
+                tableElement.appendChild(createRow(transaction));
+            }
+        }
+
+        window.addEventListener('load', function onload() {
+            window.removeEventListener("load", onload, false);
+            generateTable();
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h1>
+        {{ year }}年{% if month %}{{ month }}月{% endif %}收支表
+    </h1>
+
+    {% if month %}
+        <a href="{% url "finance_transaction_year" year=year %}">{{ year }}年收支表</a><br />
+    {% else %}
+        <a href="{% url "finance_transaction_index" %}">收支列表</a><br />
+    {% endif %}
+    <br />
+
+    {% if perms.finance.can_add_transaction %}
+    <a href="{% url "finance_transaction_add" %}">新增收支項目</a>
+    {% endif %}
+
+    <table border="2" cellspacing="0" frame="box" rules="all" id="transactionTable">
+        <tr>
+            {% if perms.finance.can_change_transaction or perms.finance.can_delete_transaction %}
+            <th colspan="10">
+            {% else %}
+            <th colspan="9">
+            {% endif %}
+            {{ year|add:"-1911" }}年{% if month %}{{ month }}月{% endif %}收支表</th>
+        </tr>
+        <tr>
+            <th>日期</th>
+            <th>票據編號</th>
+            <th>收入</th>
+            <th>支出</th>
+            <th>結算</th>
+            <th>科</th>
+            <th>目</th>
+            <th>對象</th>
+            <th>附註</th>
+            {% if perms.finance.can_change_transaction or perms.finance.can_delete_transaction %}
+            <th>操作</th>
+            {% endif %}
+        </tr>
+    </table>
+{% endblock %}

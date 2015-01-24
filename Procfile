@@ -1,0 +1,1 @@
+web: gunicorn --pythonpath clubPlatform clubPlatform.wsgi

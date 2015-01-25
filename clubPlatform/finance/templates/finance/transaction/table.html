@@ -122,18 +122,18 @@
 
 {% block body %}
     <h1>
-        {{ year }}年{% if month %}{{ month }}月{% endif %}收支表
+        {{ year }}年{% if month %}{{ month }}月{% endif %}收支紀錄
     </h1>
 
     {% if month %}
-        <a href="{% url "finance_transaction_year" year=year %}">{{ year }}年收支表</a><br />
+        <a href="{% url "finance_transaction_year" year=year %}">{{ year }}年收支紀錄</a><br />
     {% else %}
         <a href="{% url "finance_index" %}">財務主頁</a><br />
     {% endif %}
     <br />
 
     {% if perms.finance.can_add_transaction %}
-    <a href="{% url "finance_transaction_add" %}">新增收支項目</a>
+    <a href="{% url "finance_transaction_add" %}">新增收支紀錄</a>
     {% endif %}
 
     <table border="2" cellspacing="0" frame="box" rules="all" id="transactionTable">
@@ -143,7 +143,7 @@
             {% else %}
             <th colspan="9">
             {% endif %}
-            {{ year|add:"-1911" }}年{% if month %}{{ month }}月{% endif %}收支表</th>
+            {{ year|add:"-1911" }}年{% if month %}{{ month }}月{% endif %}收支紀錄</th>
         </tr>
         <tr>
             <th>日期</th>

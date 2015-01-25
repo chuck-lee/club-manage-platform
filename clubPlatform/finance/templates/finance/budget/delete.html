@@ -6,18 +6,24 @@
         確定刪除下列預算?<br />
         <table border="2" cellspacing="0" frame="box" rules="all">
         <tr>
-            <td>
+            <th>預算年度</th>
+            <th>收支類別</th>
+            <th>科</th>
+            <th>目</th>
+            <th>金額</th>
+        </tr>
+        <tr>
+            <td align="center">{{ object.year }}</td>
+            <td align="center">
                 {% if object.type == 1 %}
                 歲入
                 {% else %}
                 歲出
                 {% endif %}
             </td>
-            <td>{{ object.category }}</td>
-            {% if object.subCategory %}
-            <td>{{ object.subCategory }}</td>
-            {% endif %}
-            <td>{{ object.amount }}</td>
+            <td align="center">{{ object.category }}</td>
+            <td align="center">{% if object.subCategory %}{{ object.subCategory }}{% endif %}</td>
+            <td align="center">{{ object.amount }}</td>
         </table>
         <input type="submit" value="刪除" />
     </form>

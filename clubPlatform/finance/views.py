@@ -15,7 +15,7 @@ from finance.forms import *
 ####### shared functions #######
 ################################
 def _get_budget_years():
-    budgets = Budget.objects.order_by('year')
+    budgets = Budget.objects.order_by('-year')
 
     years = []
     for budget in budgets:

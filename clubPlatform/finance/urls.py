@@ -18,4 +18,8 @@ urlpatterns = patterns('',
     url(r'^transaction/add/?$', views.AddTransaction.as_view(), name='finance_transaction_add'),
     url(r'^transaction/change/(?P<pk>\d+)/?$', views.ChangeTransaction.as_view(), name='finance_transaction_change'),
     url(r'^transaction/delete/(?P<pk>\d+)/?$', views.DeleteTransaction.as_view(), name='finance_transaction_delete'),
+
+    url(r'^report/?$', views.reportIndex, name='finance_report_index'),
+    url(r'^report/(?P<year>\d+)/?$', views.reportYear, name='finance_report_year'),
+    url(r'^report/(?P<year>\d+)/(?P<month>\d+)/?$', views.reportYearMonth, name='finance_report_year_month'),
 )

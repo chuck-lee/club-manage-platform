@@ -11,9 +11,10 @@ from datetime import datetime
 from finance.models import *
 from finance.forms import *
 
-
-# Create your views here.
-def index(request):
+################################
+####### shared functions #######
+################################
+def _get_budget_years():
     budgets = Budget.objects.order_by('year')
 
     years = []
@@ -22,22 +23,21 @@ def index(request):
             continue
         years.append(budget.year)
 
+    return years
+
+################################
+######## View functions ########
+################################
+
+def index(request):
     context = {
-        'years': years
+        'years': _get_budget_years()
     }
     return render(request, 'finance/index.html', context)
 
 def budgetIndex(request):
-    budgets = Budget.objects.order_by('year')
-
-    years = []
-    for budget in budgets:
-        if budget.year in years:
-            continue
-        years.append(budget.year)
-
     context = {
-        'years': years
+        'years': _get_budget_years()
     }
     return render(request, 'finance/budget/index.html', context)
 
@@ -81,80 +81,11 @@ def budget(request, year):
     }
     return render(request, 'finance/budget/table.html', context)
 
-class AddBudget(CreateView):
-    template_name = 'finance/budget/add.html'
-    model = Budget
-    form_class = BudgetForm
-
-    @method_decorator(permission_required('finance.add_budget', raise_exception=True))
-    def dispatch(self, *args, **kwargs):
-        return super(AddBudget, self).dispatch(*args, **kwargs)
-
-    def form_valid(self, form):
-        return super(AddBudget, self).form_valid(form)
-
-class ChangeBudget(UpdateView):
-    template_name = 'finance/budget/change.html'
-    model = Budget
-    form_class = BudgetForm
-
-    @method_decorator(permission_required('finance.change_budget', raise_exception=True))
-    def dispatch(self, *args, **kwargs):
-        return super(ChangeBudget, self).dispatch(*args, **kwargs)
-
-class DeleteBudget(DeleteView):
-    template_name = 'finance/budget/delete.html'
-    model = Budget
-    fields = '__all__'
-
-    @method_decorator(permission_required('finance.delete_budget', raise_exception=True))
-    def dispatch(self, *args, **kwargs):
-        return super(DeleteBudget, self).dispatch(*args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.year = self.object.year
-        self.object.delete()
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_success_url(self):
-        return reverse('finance_budget', kwargs={'year': self.year})
-
-class DuplicateBudget(FormView):
-    template_name = 'finance/budget/duplicate.html'
-    form_class = DuplicateBudgetForm
-
-    def form_valid(self, form):
-        budgets = Budget.objects.filter(
-            year = form.cleaned_data['fromYear']
-        ).order_by('-type', 'category')
-
-        self.toYear = form.cleaned_data['toYear']
-
-        for budget in budgets:
-            newBudget = Budget.objects.create(
-                            year = self.toYear,
-                            type = budget.type,
-                            category = budget.category,
-                            subCategory = budget.subCategory,
-                            amount = budget.amount
-                        )
-        return super(DuplicateBudget, self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse('finance_budget', kwargs={'year': self.toYear})
-
 def transactionIndex(request):
-    transactions = Transaction.objects.order_by('date')
-
-    years = []
-    for transaction in transactions:
-        if transaction.date.year in years:
-            continue
-        years.append(transaction.date.year)
-
+    # There must be a budget then transaction can be submmited.
+    # So the year list of transaction equals year list of budget, and its faster.
     context = {
-        'years': years
+        'years': _get_budget_years()
     }
     return render(request, 'finance/transaction/index.html', context)
 
@@ -243,6 +174,138 @@ def transactionYearMonth(request, year, month):
     }
 
     return render(request, 'finance/transaction/table.html', context)
+
+def reportIndex(request):
+    context = {
+        'years': _get_budget_years()
+    }
+    return render(request, 'finance/report/index.html', context)
+
+def reportYear(request, year):
+    budgets = Budget.objects.filter(
+        year = int(year)
+    ).order_by('-type', 'category')
+    reportList = []
+    for budget in budgets:
+        transaction_amount = Transaction.objects.filter(
+            date__year = int(year),
+            budget = budget,
+        ).aggregate(amount=Sum('amount'))['amount']
+
+        reportList.append({
+            'type': '歲入' if budget.type == 1 else '歲出',
+            'category': budget.category.name,
+            'subCategory': budget.subCategory.name if budget.subCategory != None else '',
+            'budget_amount': budget.amount,
+            'transaction_amount': transaction_amount if transaction_amount != None else 0,
+        })
+
+    context = {
+        'year': year,
+        'reportList': reportList,
+    }
+    return render(request, 'finance/report/table.html', context)
+
+def reportYearMonth(request, year, month):
+    budgets = Budget.objects.filter(
+        year = int(year)
+    ).order_by('-type', 'category')
+    reportList = []
+    for budget in budgets:
+        transaction_amount_this_month = Transaction.objects.filter(
+            date__year = int(year),
+            date__month = int(month),
+            budget = budget,
+        ).aggregate(amount=Sum('amount'))['amount']
+
+        transaction_amount_prev_months = Transaction.objects.filter(
+            date__gte = datetime(int(year), 1, 1),
+            date__lt = datetime(int(year), int(month), 1),
+            budget = budget,
+        ).aggregate(amount=Sum('amount'))['amount']
+
+        reportList.append({
+            'type': '歲入' if budget.type == 1 else '歲出',
+            'category': budget.category.name,
+            'subCategory': budget.subCategory.name if budget.subCategory != None else '',
+            'budget_amount': budget.amount,
+            'transaction_amount_this_month': transaction_amount_this_month if transaction_amount_this_month != None else 0,
+            'transaction_amount_prev_months': transaction_amount_prev_months if transaction_amount_prev_months != None else 0,
+        })
+
+    context = {
+        'year': year,
+        'month': month,
+        'reportList': reportList,
+    }
+    return render(request, 'finance/report/table.html', context)
+
+################################
+########  Form classes  ########
+################################
+
+class AddBudget(CreateView):
+    template_name = 'finance/budget/add.html'
+    model = Budget
+    form_class = BudgetForm
+
+    @method_decorator(permission_required('finance.add_budget', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(AddBudget, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        return super(AddBudget, self).form_valid(form)
+
+class ChangeBudget(UpdateView):
+    template_name = 'finance/budget/change.html'
+    model = Budget
+    form_class = BudgetForm
+
+    @method_decorator(permission_required('finance.change_budget', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(ChangeBudget, self).dispatch(*args, **kwargs)
+
+class DeleteBudget(DeleteView):
+    template_name = 'finance/budget/delete.html'
+    model = Budget
+    fields = '__all__'
+
+    @method_decorator(permission_required('finance.delete_budget', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(DeleteBudget, self).dispatch(*args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.year = self.object.year
+        self.object.delete()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('finance_budget', kwargs={'year': self.year})
+
+class DuplicateBudget(FormView):
+    template_name = 'finance/budget/duplicate.html'
+    form_class = DuplicateBudgetForm
+
+    def form_valid(self, form):
+        budgets = Budget.objects.filter(
+            year = form.cleaned_data['fromYear']
+        ).order_by('-type', 'category')
+
+        self.toYear = form.cleaned_data['toYear']
+
+        for budget in budgets:
+            newBudget = Budget.objects.create(
+                            year = self.toYear,
+                            type = budget.type,
+                            category = budget.category,
+                            subCategory = budget.subCategory,
+                            amount = budget.amount
+                        )
+        return super(DuplicateBudget, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('finance_budget', kwargs={'year': self.toYear})
 
 class AddTransaction(CreateView):
     template_name = 'finance/transaction/add.html'

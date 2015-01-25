@@ -1,0 +1,232 @@
+{% extends "finance/base.html" %}
+
+{% block head %}
+    <script type="text/javascript">
+        function createRow(report) {
+            var row = document.createElement("tr");
+
+            if (report.subCategory.length > 0) {
+                row.appendChild(document.createElement("td"));
+                row.appendChild(document.createElement("td"));
+
+                var col = document.createElement("td");
+                col.style.textAlign = 'center';
+                col.appendChild(document.createTextNode(report.subCategory));
+                row.appendChild(col);
+            } else if (report.category.length > 0) {
+                row.appendChild(document.createElement("td"));
+
+                var col = document.createElement("td");
+                col.style.textAlign = 'center';
+                col.appendChild(document.createTextNode(report.category));
+                row.appendChild(col);
+
+                row.appendChild(document.createElement("td"));
+            } else {
+                var col = document.createElement("td");
+                col.style.textAlign = 'center';
+                col.appendChild(document.createTextNode(report.type));
+                row.appendChild(col);
+
+                row.appendChild(document.createElement("td"));
+                row.appendChild(document.createElement("td"));
+            }
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(report.budget_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            {% if month %}
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(report.transaction_amount_this_month.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(report.transaction_amount_prev_months.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+            {% endif %}
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(report.transaction_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            var total = report.budget_amount - report.transaction_amount;
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")));
+            row.appendChild(col);
+
+            var execRate = report.transaction_amount * 100 / report.budget_amount;
+            var col = document.createElement("td");
+            col.style.textAlign = 'right';
+            col.appendChild(document.createTextNode(execRate.toFixed(2) + "%"));
+            row.appendChild(col);
+
+            return row;
+        }
+
+        function generateTable() {
+            var reports = [
+                {% for report in reportList %}
+                {
+                    type: '{{ report.type }}',
+                    category: '{{ report.category }}',
+                    subCategory: '{{ report.subCategory }}',
+                    budget_amount: {{ report.budget_amount }},
+                    {% if month %}
+                    transaction_amount_this_month: {{ report.transaction_amount_this_month }},
+                    transaction_amount_prev_months: {{ report.transaction_amount_prev_months }},
+                    transaction_amount: {{ report.transaction_amount_this_month }} + {{ report.transaction_amount_prev_months }},
+                    {% else %}
+                    transaction_amount: {{ report.transaction_amount }},
+                    {% endif %}
+                },
+                {% endfor %}
+            ];
+
+            var reportList = {};
+            for (var i = 0; i < reports.length; i++) {
+                report = reports[i];
+                var reportType = report.type;
+                var reportCategory = report.category;
+                if (!reportList[reportType]) {
+                    reportList[reportType] = {
+                        category: {},
+                        budget_amount: 0,
+                        transaction_amount: 0,
+                        {% if month %}
+                        transaction_amount_this_month: 0,
+                        transaction_amount_prev_months: 0,
+                        {% endif %}
+                    };
+                }
+
+                if (!reportList[reportType].category[reportCategory]) {
+                    reportList[reportType].category[reportCategory] = {
+                        subCategory: {},
+                        budget_amount: 0,
+                        transaction_amount: 0,
+                        {% if month %}
+                        transaction_amount_this_month: 0,
+                        transaction_amount_prev_months: 0,
+                        {% endif %}
+                    };
+                }
+
+                reportList[reportType].budget_amount += report.budget_amount;
+                reportList[reportType].transaction_amount += report.transaction_amount;
+                reportList[reportType].category[reportCategory].budget_amount += report.budget_amount;
+                reportList[reportType].category[reportCategory].transaction_amount += report.transaction_amount;
+                {% if month %}
+                reportList[reportType].transaction_amount_this_month += report.transaction_amount_this_month;
+                reportList[reportType].transaction_amount_prev_months += report.transaction_amount_prev_months;
+                reportList[reportType].category[reportCategory].transaction_amount_this_month += report.transaction_amount_this_month;
+                reportList[reportType].category[reportCategory].transaction_amount_prev_months += report.transaction_amount_prev_months;
+                {% endif %}
+
+                if (report.subCategory.length > 0) {
+                    reportList[reportType].category[reportCategory].subCategory[report.subCategory] = {
+                        budget_amount: report.budget_amount,
+                        transaction_amount: report.transaction_amount,
+                        {% if month %}
+                        transaction_amount_this_month: report.transaction_amount_this_month,
+                        transaction_amount_prev_months: report.transaction_amount_prev_months,
+                        {% endif %}
+                    };
+                }
+            }
+
+            var tableElement = document.getElementById('reportTable');
+            for (type in reportList) {
+                var reportTypeInfo = reportList[type];
+                tableElement.appendChild(createRow({
+                    type: type,
+                    category: '',
+                    subCategory: '',
+                    budget_amount: reportTypeInfo.budget_amount,
+                    transaction_amount: reportTypeInfo.transaction_amount,
+                    {% if month %}
+                    transaction_amount_this_month: reportTypeInfo.transaction_amount_this_month,
+                    transaction_amount_prev_months: reportTypeInfo.transaction_amount_prev_months,
+                    {% endif %}
+                }));
+
+                for (category in reportList[type].category) {
+                    var reportCategoryInfo = reportTypeInfo.category[category];
+                    tableElement.appendChild(createRow({
+                        type: type,
+                        category: category,
+                        subCategory: '',
+                        budget_amount: reportCategoryInfo.budget_amount,
+                        transaction_amount: reportCategoryInfo.transaction_amount,
+                        {% if month %}
+                        transaction_amount_this_month: reportCategoryInfo.transaction_amount_this_month,
+                        transaction_amount_prev_months: reportCategoryInfo.transaction_amount_prev_months,
+                        {% endif %}
+                    }));
+
+                    for (subCategory in reportList[type].category[category].subCategory) {
+                        var reportSubCategoryInfo = reportCategoryInfo.subCategory[subCategory];
+                        tableElement.appendChild(createRow({
+                            type: type,
+                            category: category,
+                            subCategory: subCategory,
+                            budget_amount: reportSubCategoryInfo.budget_amount,
+                            transaction_amount: reportSubCategoryInfo.transaction_amount,
+                            {% if month %}
+                            transaction_amount_this_month: reportSubCategoryInfo.transaction_amount_this_month,
+                            transaction_amount_prev_months: reportSubCategoryInfo.transaction_amount_prev_months,
+                            {% endif %}
+                        }));
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('load', function onload() {
+            window.removeEventListener("load", onload, false);
+            generateTable();
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h1>
+        {{ year }}年{% if month %}{{ month }}月{% endif %}收支報表
+    </h1>
+
+    {% if month %}
+        <a href="{% url "finance_report_year" year=year %}">{{ year }}年收支報表</a><br />
+    {% else %}
+        <a href="{% url "finance_index" %}">財務主頁</a><br />
+    {% endif %}
+    <br />
+
+    <table border="2" cellspacing="0" frame="box" rules="all" id="reportTable">
+        <tr>
+            {% if month %}
+            <th colspan="9">
+            {% else %}
+            <th colspan="7">
+            {% endif %}
+            {{ year|add:"-1911" }}年{% if month %}{{ month }}月{% endif %}收支報表</th>
+        </tr>
+        <tr>
+            <th>收支類別</th>
+            <th>科</th>
+            <th>目</th>
+            <th>預算金額</th>
+            {% if month %}
+            <th>本期執行</th>
+            <th>前期累積</th>
+            {% endif %}
+            <th>累積執行</th>
+            <th>預算餘額</th>
+            <th>執行率</th>
+        </tr>
+    </table>
+{% endblock %}

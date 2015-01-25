@@ -14,7 +14,18 @@ from finance.forms import *
 
 # Create your views here.
 def index(request):
-    return render(request, 'finance/index.html')
+    budgets = Budget.objects.order_by('year')
+
+    years = []
+    for budget in budgets:
+        if budget.year in years:
+            continue
+        years.append(budget.year)
+
+    context = {
+        'years': years
+    }
+    return render(request, 'finance/index.html', context)
 
 def budgetIndex(request):
     budgets = Budget.objects.order_by('year')
@@ -80,7 +91,6 @@ class AddBudget(CreateView):
         return super(AddBudget, self).dispatch(*args, **kwargs)
 
     def form_valid(self, form):
-        print(form.instance)
         return super(AddBudget, self).form_valid(form)
 
 class ChangeBudget(UpdateView):

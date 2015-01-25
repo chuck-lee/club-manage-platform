@@ -2,7 +2,24 @@
 
 {% block body %}
     <h1>財務主頁</h1>
-    <a href="{% url "finance_budget_index" %}/">預算</a>
-    <br />
-    <a href="{% url "finance_transaction_index" %}/">收支報表</a>
+
+    {% if perms.finance.can_add_budget %}
+        <a href="{% url "finance_budget_duplicate" %}/">新增年度預算</a><br />
+    {% endif %}
+    <table border="2" cellspacing="0" frame="box" rules="all">
+    <tr>
+        <th>年度</th>
+        <th>財務報表</th>
+    </tr>
+    {% for year in years %}
+    <tr>
+        <td>{{ year }}</td>
+        <td>
+            <a href="{% url "finance_budget" year=year %}/">預算</a>
+            <br />
+            <a href="{% url "finance_transaction_year" year=year %}/">收支報表</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
 {% endblock %}

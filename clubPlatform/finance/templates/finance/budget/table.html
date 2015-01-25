@@ -4,7 +4,6 @@
     <script type="text/javascript">
         function createRow(budget) {
             var row = document.createElement("tr");
-            var rowEditable = false;
 
             if (budget.subCategory.length > 0) {
                 row.appendChild(document.createElement("td"));
@@ -154,7 +153,7 @@
                     }));
 
                     for (subCategory in budgetList[type].category[category].subCategory) {
-                        var budgetSubCategoryInfo = budgetTypeInfo.category[category].subCategory[subCategory];
+                        var budgetSubCategoryInfo = budgetCategoryInfo.subCategory[subCategory];
                         tableElement.appendChild(createRow({
                             id: budgetSubCategoryInfo.id,
                             type: type,

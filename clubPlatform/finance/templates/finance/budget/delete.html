@@ -3,7 +3,10 @@
 {% block body %}
     {% if perms.finance.can_delete_budget %}
     <form action="" method="post">{% csrf_token %}
-        確定刪除下列預算?<br />
+        {% if transactions %}
+        刪除預算會一併刪除相關支收紀錄共{{ transactions }}筆！<br />
+        {% endif %}
+        確定刪除預算?<br />
         <table border="2" cellspacing="0" frame="box" rules="all">
         <tr>
             <th>預算年度</th>

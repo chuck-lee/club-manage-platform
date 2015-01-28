@@ -270,14 +270,22 @@ class DeleteBudget(DeleteView):
     model = Budget
     fields = '__all__'
 
+    def get_context_data(self, **kwargs):
+        context = super(DeleteBudget, self).get_context_data(**kwargs)
+        budget = self.get_object()
+        transactions = Transaction.objects.filter(budget=budget).count()
+        context['transactions'] = transactions
+        return context
+
     @method_decorator(permission_required('finance.delete_budget', raise_exception=True))
     def dispatch(self, *args, **kwargs):
         return super(DeleteBudget, self).dispatch(*args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.year = self.object.year
-        self.object.delete()
+        budget = self.get_object()
+        Transaction.objects.filter(budget=budget).delete()
+        self.year = budget.year
+        budget.delete()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -286,6 +294,10 @@ class DeleteBudget(DeleteView):
 class DuplicateBudget(FormView):
     template_name = 'finance/budget/duplicate.html'
     form_class = DuplicateBudgetForm
+
+    @method_decorator(permission_required('finance.add_budget', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(DuplicateBudget, self).dispatch(*args, **kwargs)
 
     def form_valid(self, form):
         budgets = Budget.objects.filter(

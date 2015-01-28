@@ -7,14 +7,14 @@ from django import forms
 ###########  Models  ###########
 ################################
 class Payee(models.Model):
-    name = models.CharField(max_length=200, verbose_name='名稱')
+    name = models.CharField(max_length=200, verbose_name='名稱', unique=True)
     def __str__(self):
         return self.name
     def get_absolute_url(self):
         return reverse('finance_payee')
 
 class Category(models.Model):
-    name = models.CharField(max_length=200, verbose_name='名稱')
+    name = models.CharField(max_length=200, verbose_name='名稱', unique=True)
     def __str__(self):
         return self.name
     def get_absolute_url(self):
@@ -27,6 +27,14 @@ class SubCategory(models.Model):
         return self.category.name + " - " + self.name
     def get_absolute_url(self):
         return reverse('finance_category')
+    def clean_fields(self, exclude = None):
+        super(SubCategory, self).clean_fields(exclude)
+        subcategories = SubCategory.objects.filter(
+            category=self.category,
+            name=self.name
+        ).count()
+        if subcategories != 0:
+            raise ValidationError({'name': '已經存在相同科目'})
 
 TYPE = (
     (-1, '支出'),

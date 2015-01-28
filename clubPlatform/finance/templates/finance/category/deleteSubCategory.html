@@ -1,8 +1,11 @@
 {% extends "finance/base.html" %}
 
 {% block body %}
-    {% if perms.finance.can_delete_budget %}
+    {% if perms.finance.can_delete_category %}
     <form action="" method="post">{% csrf_token %}
+        {% if budgets or transactions %}
+        刪除科會一併刪除{{ budgets }}筆預算及{{ transactions }}筆收支紀錄！<br />
+        {% endif %}
         確定刪除目?<br />
         <table border="2" cellspacing="0" frame="box" rules="all">
         <tr>

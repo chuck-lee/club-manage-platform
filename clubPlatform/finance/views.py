@@ -322,8 +322,9 @@ class DeleteCategory(DeleteView):
     def get_context_data(self, **kwargs):
         context = super(DeleteCategory, self).get_context_data(**kwargs)
         category = self.get_object()
-        subcategories = SubCategory.objects.filter(category=category).count()
-        context['subcategories'] = subcategories
+        context['subcategories'] = SubCategory.objects.filter(category=category).count()
+        context['budgets'] = Budget.objects.filter(subCategory__category=category).count()
+        context['transactions'] = Transaction.objects.filter(budget__subCategory__category=category).count()
         return context
 
 
@@ -356,6 +357,13 @@ class DeleteSubCategory(DeleteView):
 
     def get_success_url(self):
         return reverse('finance_category')
+
+    def get_context_data(self, **kwargs):
+        context = super(DeleteSubCategory, self).get_context_data(**kwargs)
+        subCategory = self.get_object()
+        context['budgets'] = Budget.objects.filter(subCategory=subCategory).count()
+        context['transactions'] = Transaction.objects.filter(budget__subCategory=subCategory).count()
+        return context
 
 
 class AddBudget(CreateView):
@@ -397,7 +405,6 @@ class DeleteBudget(DeleteView):
 
     def delete(self, request, *args, **kwargs):
         budget = self.get_object()
-        Transaction.objects.filter(budget=budget).delete()
         self.year = budget.year
         budget.delete()
         return HttpResponseRedirect(self.get_success_url())

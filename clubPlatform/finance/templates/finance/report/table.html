@@ -128,16 +128,14 @@
                 reportList[reportType].category[reportCategory].transaction_amount_prev_months += report.transaction_amount_prev_months;
                 {% endif %}
 
-                if (report.subCategory.length > 0) {
-                    reportList[reportType].category[reportCategory].subCategory[report.subCategory] = {
-                        budget_amount: report.budget_amount,
-                        transaction_amount: report.transaction_amount,
-                        {% if month %}
-                        transaction_amount_this_month: report.transaction_amount_this_month,
-                        transaction_amount_prev_months: report.transaction_amount_prev_months,
-                        {% endif %}
-                    };
-                }
+                reportList[reportType].category[reportCategory].subCategory[report.subCategory] = {
+                    budget_amount: report.budget_amount,
+                    transaction_amount: report.transaction_amount,
+                    {% if month %}
+                    transaction_amount_this_month: report.transaction_amount_this_month,
+                    transaction_amount_prev_months: report.transaction_amount_prev_months,
+                    {% endif %}
+                };
             }
 
             var tableElement = document.getElementById('reportTable');

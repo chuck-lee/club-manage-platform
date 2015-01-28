@@ -118,14 +118,12 @@
                 budgetList[budgetType].category[budgetCategory].last_transaction += budget.last_transaction;
                 budgetList[budgetType].category[budgetCategory].last_budget += budget.last_budget;
 
-                if (budget.subCategory.length > 0) {
-                    budgetList[budgetType].category[budgetCategory].subCategory[budget.subCategory] = {
-                        id: budget.id,
-                        amount: budget.amount,
-                        last_transaction: budget.last_transaction,
-                        last_budget: budget.last_budget
-                    };
-                }
+                budgetList[budgetType].category[budgetCategory].subCategory[budget.subCategory] = {
+                    id: budget.id,
+                    amount: budget.amount,
+                    last_transaction: budget.last_transaction,
+                    last_budget: budget.last_budget
+                };
             }
 
             var tableElement = document.getElementById('budgetTable');

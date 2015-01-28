@@ -17,12 +17,16 @@ class Category(models.Model):
     name = models.CharField(max_length=200, verbose_name='名稱')
     def __str__(self):
         return self.name
+    def get_absolute_url(self):
+        return reverse('finance_category')
 
 class SubCategory(models.Model):
     category = models.ForeignKey(Category, verbose_name='科')
     name = models.CharField(max_length=200, verbose_name='名稱')
     def __str__(self):
         return self.category.name + " - " + self.name
+    def get_absolute_url(self):
+        return reverse('finance_category')
 
 TYPE = (
     (-1, '支出'),

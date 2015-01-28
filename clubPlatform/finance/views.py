@@ -38,9 +38,17 @@ def index(request):
 @permission_required('finance.can_add_payee', raise_exception=True)
 def payee(request):
     context = {
-        'payees': Payee.objects.all().order_by('id')
+        'payees': Payee.objects.order_by('id')
     }
     return render(request, 'finance/payee/index.html', context)
+
+@permission_required('finance.can_add_category', raise_exception=True)
+def category(request):
+    context = {
+        'categories': Category.objects.order_by('id'),
+        'subcategories': SubCategory.objects.order_by('category')
+    }
+    return render(request, 'finance/category/index.html', context)
 
 def budgetIndex(request):
     context = {
@@ -279,6 +287,75 @@ class DeletePayee(DeleteView):
 
     def get_success_url(self):
         return reverse('finance_payee')
+
+
+class AddCategory(CreateView):
+    template_name = 'finance/category/addCategory.html'
+    model = Category
+    form_class = CategoryForm
+
+    @method_decorator(permission_required('finance.add_category', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(AddCategory, self).dispatch(*args, **kwargs)
+
+class ChangeCategory(UpdateView):
+    template_name = 'finance/category/changeCategory.html'
+    model = Category
+    form_class = CategoryForm
+
+    @method_decorator(permission_required('finance.change_category', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(ChangeCategory, self).dispatch(*args, **kwargs)
+
+class DeleteCategory(DeleteView):
+    template_name = 'finance/category/deleteCategory.html'
+    model = Category
+    fields = '__all__'
+
+    @method_decorator(permission_required('finance.delete_category', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(DeleteCategory, self).dispatch(*args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('finance_category')
+
+    def get_context_data(self, **kwargs):
+        context = super(DeleteCategory, self).get_context_data(**kwargs)
+        category = self.get_object()
+        subcategories = SubCategory.objects.filter(category=category).count()
+        context['subcategories'] = subcategories
+        return context
+
+
+class AddSubCategory(CreateView):
+    template_name = 'finance/category/addSubCategory.html'
+    model = SubCategory
+    form_class = SubCategoryForm
+
+    @method_decorator(permission_required('finance.add_category', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(AddSubCategory, self).dispatch(*args, **kwargs)
+
+class ChangeSubCategory(UpdateView):
+    template_name = 'finance/category/changeSubCategory.html'
+    model = SubCategory
+    form_class = SubCategoryForm
+
+    @method_decorator(permission_required('finance.change_category', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(ChangeSubCategory, self).dispatch(*args, **kwargs)
+
+class DeleteSubCategory(DeleteView):
+    template_name = 'finance/category/deleteSubCategory.html'
+    model = SubCategory
+    fields = '__all__'
+
+    @method_decorator(permission_required('finance.delete_category', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(DeleteSubCategory, self).dispatch(*args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('finance_category')
 
 
 class AddBudget(CreateView):

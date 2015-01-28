@@ -1,0 +1,17 @@
+{% extends "finance/base.html" %}
+
+{% block body %}
+    {% if perms.finance.can_delete_budget %}
+    <form action="" method="post">{% csrf_token %}
+        確定刪除目?<br />
+        <table border="2" cellspacing="0" frame="box" rules="all">
+        <tr>
+            <th>目</th>
+        </tr>
+        <tr>
+            <td align="center">{{ object.name }}</td>
+        </table>
+        <input type="submit" value="刪除" />
+    </form>
+    {% endif %}
+{% endblock %}

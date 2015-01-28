@@ -3,10 +3,13 @@
 {% block body %}
     <h1>財務主頁</h1>
 
-    {% if user.is_authenticated %}
+    {% if perms.finance.can_add_payee %}
     <a href="{% url "finance_payee" %}/">收支關係人清單</a><br />
-    <br />
     {% endif %}
+    {% if perms.finance.can_add_category %}
+    <a href="{% url "finance_category" %}/">收支關係人清單</a><br />
+    {% endif %}
+    <br />
 
     {% if perms.finance.can_add_budget %}
         {% if years|length > 0 %}

@@ -1,0 +1,139 @@
+{% extends "finance/base.html" %}
+
+{% block head %}
+    <script type="text/javascript">
+        function createCategoryRow(category) {
+            var row = document.createElement("tr");
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(category.name));
+            row.appendChild(col);
+
+            row.appendChild(document.createElement("td"));
+
+            {% if perms.finance.can_change_categry or perms.finance.can_delete_categry %}
+            var col = document.createElement("td");
+                {% if perms.finance.can_change_categry %}
+                    var a = document.createElement('a');
+                    a.appendChild(document.createTextNode('修改'));
+                    a.href = '{% url "finance_category_change" pk=0 %}/'.replace(/0/, category.id);
+                    col.appendChild(a);
+
+                    col.appendChild(document.createTextNode(' '));
+                {% endif %}
+
+                {% if perms.finance.can_delete_categry %}
+                    var a = document.createElement('a');
+                    a.appendChild(document.createTextNode('刪除'));
+                    a.href = '{% url "finance_category_delete" pk=0 %}/'.replace(/0/, category.id);
+                    col.appendChild(a);
+                {% endif %}
+            row.appendChild(col);
+            {% endif %}
+
+            return row;
+        }
+
+        function createSubCategoryRow(subcategory) {
+            var row = document.createElement("tr");
+
+            row.appendChild(document.createElement("td"));
+
+            var col = document.createElement("td");
+            col.style.textAlign = 'center';
+            col.appendChild(document.createTextNode(subcategory.name));
+            row.appendChild(col);
+
+            {% if perms.finance.can_change_categry or perms.finance.can_delete_categry %}
+            var col = document.createElement("td");
+                {% if perms.finance.can_change_categry %}
+                    var a = document.createElement('a');
+                    a.appendChild(document.createTextNode('修改'));
+                    a.href = '{% url "finance_subcategory_change" pk=0 %}/'.replace(/0/, subcategory.id);
+                    col.appendChild(a);
+
+                    col.appendChild(document.createTextNode(' '));
+                {% endif %}
+
+                {% if perms.finance.can_delete_categry %}
+                    var a = document.createElement('a');
+                    a.appendChild(document.createTextNode('刪除'));
+                    a.href = '{% url "finance_subcategory_delete" pk=0 %}/'.replace(/0/, subcategory.id);
+                    col.appendChild(a);
+                {% endif %}
+            row.appendChild(col);
+            {% endif %}
+
+            return row;
+        }
+
+        function generateTable() {
+            var categoryList = {
+                {% for category in categories %}
+                '{{ category.name }}' : {
+                    id: {{ category.id }},
+                    subCategory: {}
+                },
+                {% endfor %}
+            };
+
+            var subcategories = [
+                {% for subcategory in subcategories %}
+                {
+                    category: '{{ subcategory.category.name }}',
+                    id: {{ subcategory.id }},
+                    name: '{{ subcategory.name }}',
+                },
+                {% endfor %}
+            ];
+
+            for (var i = 0; i < subcategories.length; i++) {
+                categoryList[subcategories[i].category].subCategory[subcategories[i].name] = subcategories[i].id;
+            }
+
+            var tableElement = document.getElementById('categoryTable');
+            for (category in categoryList) {
+                var categoryInfo = categoryList[category];
+                tableElement.appendChild(createCategoryRow({
+                    id: categoryInfo.id,
+                    name: category,
+                }));
+
+                var subCategories = categoryInfo.subCategory;
+                for (subcategory in subCategories) {
+                    tableElement.appendChild(createSubCategoryRow({
+                        id: subCategories[subcategory],
+                        name: subcategory,
+                    }));
+                }
+            }
+        }
+
+        window.addEventListener('load', function onload() {
+            window.removeEventListener("load", onload, false);
+            generateTable();
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h1>收支科目清單</h1>
+    <a href="{% url "finance_index" %}">財務主頁</a><br />
+    <br />
+
+    {% if perms.finance.can_add_category %}
+    <a href="{% url "finance_category_add" %}">新增科</a><br />
+    <a href="{% url "finance_subcategory_add" %}">新增目</a><br />
+    {% endif %}
+
+    <table border="2" cellspacing="0" frame="box" rules="all" id="categoryTable">
+        <tr>
+            <th>科</th>
+            <th>目</th>
+            {% if perms.finance.can_change_category or perms.finance.can_delete_category %}
+            <th>操作</th>
+            {% endif %}
+        </tr>
+    </table>
+{% endblock %}

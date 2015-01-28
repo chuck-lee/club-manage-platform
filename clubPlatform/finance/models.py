@@ -29,12 +29,15 @@ class SubCategory(models.Model):
         return reverse('finance_category')
     def clean_fields(self, exclude = None):
         super(SubCategory, self).clean_fields(exclude)
-        subcategories = SubCategory.objects.filter(
-            category=self.category,
-            name=self.name
-        ).count()
-        if subcategories != 0:
-            raise ValidationError({'name': '已經存在相同科目'})
+        try:
+            subCategory = SubCategory.objects.get(
+                category=self.category,
+                name=self.name
+            )
+            if subCategory.id != self.id:
+                raise ValidationError({'name': '已經存在相同科目'})
+        except ObjectDoesNotExist:
+            pass
 
 TYPE = (
     (-1, '支出'),
@@ -44,24 +47,28 @@ TYPE = (
 class Budget(models.Model):
     year = models.IntegerField(verbose_name='年度')
     type = models.IntegerField(choices=TYPE, default=-1, verbose_name='收支')
-    category = models.ForeignKey(Category, verbose_name='科')
-    subCategory = models.ForeignKey(SubCategory, blank=True, null=True, verbose_name='目')
+    subCategory = models.ForeignKey(SubCategory, verbose_name='目')
     amount = models.IntegerField(verbose_name='金額')
     def __str__(self):
         result = "(" + str(self.year) + ") " + \
                 ('支出 - ' if self.type == -1 else '收入 - ') + \
-                self.category.name
-        if self.subCategory != None:
-            result = result + " - " + self.subCategory.name
-        result = result + " : " + str(self.amount)
+                self.subCategory.category.name + \
+                " - " + self.subCategory.name + \
+                " : " + str(self.amount)
         return result
     def get_absolute_url(self):
         return reverse('finance_budget', kwargs={'year': self.year})
     def clean_fields(self, exclude = None):
         super(Budget, self).clean_fields(exclude)
-        if self.subCategory != None and \
-           self.subCategory.category != self.category:
-            raise ValidationError({'subCategory': '科目不符'})
+        try:
+            budget = Budget.objects.get(
+                year = self.year,
+                type = self.type,
+                subCategory = self.subCategory)
+            if budget.id != self.id:
+                raise ValidationError({'subCategory': '預算已存在'})
+        except ObjectDoesNotExist:
+            pass
 
 class Transaction(models.Model):
     date = models.DateField(verbose_name='日期')
@@ -71,10 +78,9 @@ class Transaction(models.Model):
     payee = models.ForeignKey(Payee, blank=True, null=True, verbose_name='關係人')
     comment = models.CharField(max_length=200, blank=True, null=True, verbose_name='附註')
     def __str__(self):
-        result = "(" + str(self.date) + ") " + self.budget.category.name
-        if self.budget.subCategory != None:
-            result = result + " - " + self.budget.subCategory.name
-        result = result + " : " + str(self.amount)
+        result = "(" + str(self.date) + ") " + self.budget.subCategory.category.name + \
+                 " - " + self.budget.subCategory.name + \
+                 " : " + str(self.amount)
         return result
     def get_absolute_url(self):
         return reverse('finance_transaction_year',

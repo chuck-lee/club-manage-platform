@@ -59,14 +59,13 @@ def budgetIndex(request):
 def budget(request, year):
     budgets = Budget.objects.filter(
         year = int(year)
-    ).order_by('-type', 'category')
+    ).order_by('-type')
     budgetList = []
     for budget in budgets:
         try:
             budget_last_year = Budget.objects.get(
                 year = int(year) - 1,
                 type = budget.type,
-                category = budget.category,
                 subCategory = budget.subCategory
             )
 
@@ -83,8 +82,8 @@ def budget(request, year):
         budgetList.append({
             'id': budget.id,
             'type': '歲入' if budget.type == 1 else '歲出',
-            'category': budget.category.name,
-            'subCategory': budget.subCategory.name if budget.subCategory != None else '',
+            'category': budget.subCategory.category.name,
+            'subCategory': budget.subCategory.name,
             'amount': budget.amount,
             'last_transaction': transaction_last_year if transaction_last_year != None else 0,
             'last_budget': budget_last_year if budget_last_year != None else 0,
@@ -131,8 +130,8 @@ def transactionYear(request, year):
                     str(transaction.date.month) + '/' +
                     str(transaction.date.day),
             'serial': transaction.documentSerial,
-            'category': transaction.budget.category.name,
-            'subCategory': transaction.budget.subCategory.name if transaction.budget.subCategory != None else '',
+            'category': transaction.budget.subCategory.category.name,
+            'subCategory': transaction.budget.subCategory.name,
             'amount': transaction.budget.type * transaction.amount,
             'payee': transaction.payee.name if request.user.is_authenticated() and transaction.payee != None else '',
             'comment': transaction.comment if request.user.is_authenticated() and transaction.comment != None else '',
@@ -174,8 +173,8 @@ def transactionYearMonth(request, year, month):
                     str(transaction.date.month) + '/' +
                     str(transaction.date.day),
             'serial': transaction.documentSerial,
-            'category': transaction.budget.category.name,
-            'subCategory': transaction.budget.subCategory.name if transaction.budget.subCategory != None else '',
+            'category': transaction.budget.subCategory.category.name,
+            'subCategory': transaction.budget.subCategory.name,
             'amount': transaction.budget.type * transaction.amount,
             'payee': transaction.payee.name if request.user.is_authenticated() and transaction.payee != None else '',
             'comment': transaction.comment if request.user.is_authenticated() and transaction.comment != None else '',
@@ -199,7 +198,7 @@ def reportIndex(request):
 def reportYear(request, year):
     budgets = Budget.objects.filter(
         year = int(year)
-    ).order_by('-type', 'category')
+    ).order_by('-type')
     reportList = []
     for budget in budgets:
         transaction_amount = Transaction.objects.filter(
@@ -209,8 +208,8 @@ def reportYear(request, year):
 
         reportList.append({
             'type': '歲入' if budget.type == 1 else '歲出',
-            'category': budget.category.name,
-            'subCategory': budget.subCategory.name if budget.subCategory != None else '',
+            'category': budget.subCategory.category.name,
+            'subCategory': budget.subCategory.name,
             'budget_amount': budget.amount,
             'transaction_amount': transaction_amount if transaction_amount != None else 0,
         })
@@ -224,7 +223,7 @@ def reportYear(request, year):
 def reportYearMonth(request, year, month):
     budgets = Budget.objects.filter(
         year = int(year)
-    ).order_by('-type', 'category')
+    ).order_by('-type')
     reportList = []
     for budget in budgets:
         transaction_amount_this_month = Transaction.objects.filter(
@@ -241,8 +240,8 @@ def reportYearMonth(request, year, month):
 
         reportList.append({
             'type': '歲入' if budget.type == 1 else '歲出',
-            'category': budget.category.name,
-            'subCategory': budget.subCategory.name if budget.subCategory != None else '',
+            'category': budget.subCategory.category.name,
+            'subCategory': budget.subCategory.name,
             'budget_amount': budget.amount,
             'transaction_amount_this_month': transaction_amount_this_month if transaction_amount_this_month != None else 0,
             'transaction_amount_prev_months': transaction_amount_prev_months if transaction_amount_prev_months != None else 0,
@@ -395,8 +394,7 @@ class DeleteBudget(DeleteView):
     def get_context_data(self, **kwargs):
         context = super(DeleteBudget, self).get_context_data(**kwargs)
         budget = self.get_object()
-        transactions = Transaction.objects.filter(budget=budget).count()
-        context['transactions'] = transactions
+        context['transactions'] = Transaction.objects.filter(budget=budget).count()
         return context
 
     @method_decorator(permission_required('finance.delete_budget', raise_exception=True))
@@ -423,7 +421,7 @@ class DuplicateBudget(FormView):
     def form_valid(self, form):
         budgets = Budget.objects.filter(
             year = form.cleaned_data['fromYear']
-        ).order_by('-type', 'category')
+        ).order_by('-type')
 
         self.toYear = form.cleaned_data['toYear']
 
@@ -431,7 +429,6 @@ class DuplicateBudget(FormView):
             newBudget = Budget.objects.create(
                             year = self.toYear,
                             type = budget.type,
-                            category = budget.category,
                             subCategory = budget.subCategory,
                             amount = budget.amount
                         )

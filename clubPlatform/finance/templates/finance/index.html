@@ -3,25 +3,37 @@
 {% block body %}
     <h1>財務主頁</h1>
 
-    {% if perms.finance.can_add_budget %}
-        <a href="{% url "finance_budget_duplicate" %}/">新增年度預算</a><br />
+    {% if user.is_authenticated %}
+    <a href="{% url "finance_payee" %}/">收支關係人清單</a><br />
+    <br />
     {% endif %}
-    <table border="2" cellspacing="0" frame="box" rules="all">
-    <tr>
-        <th>年度</th>
-        <th>財務報表</th>
-    </tr>
-    {% for year in years %}
-    <tr>
-        <td>{{ year }}</td>
-        <td>
-            <a href="{% url "finance_budget" year=year %}/">預算</a>
-            <br />
-            <a href="{% url "finance_transaction_year" year=year %}/">收支紀錄</a>
-            <br />
-            <a href="{% url "finance_report_year" year=year %}/">收支報表</a>
-        </td>
-    </tr>
-    {% endfor %}
-    </table>
+
+    {% if perms.finance.can_add_budget %}
+        {% if years|length > 0 %}
+            <a href="{% url "finance_budget_duplicate" %}/">新增年度預算</a><br />
+        {% else %}
+            <a href="{% url "finance_transaction_add" %}/">新增單筆預算</a><br />
+        {% endif %}
+    {% endif %}
+
+    {% if years|length > 0 %}
+        <table border="2" cellspacing="0" frame="box" rules="all">
+        <tr>
+            <th>年度</th>
+            <th>財務報表</th>
+        </tr>
+        {% for year in years %}
+        <tr>
+            <td>{{ year }}</td>
+            <td>
+                <a href="{% url "finance_budget" year=year %}/">預算</a>
+                <br />
+                <a href="{% url "finance_transaction_year" year=year %}/">收支紀錄</a>
+                <br />
+                <a href="{% url "finance_report_year" year=year %}/">收支報表</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </table>
+    {% endif %}
 {% endblock %}

@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import permission_required
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 
@@ -34,6 +34,13 @@ def index(request):
         'years': _get_budget_years()
     }
     return render(request, 'finance/index.html', context)
+
+@permission_required('finance.can_add_payee', raise_exception=True)
+def payee(request):
+    context = {
+        'payees': Payee.objects.all().order_by('id')
+    }
+    return render(request, 'finance/payee/index.html', context)
 
 def budgetIndex(request):
     context = {
@@ -243,6 +250,36 @@ def reportYearMonth(request, year, month):
 ################################
 ########  Form classes  ########
 ################################
+class AddPayee(CreateView):
+    template_name = 'finance/payee/add.html'
+    model = Payee
+    form_class = PayeeForm
+
+    @method_decorator(permission_required('finance.add_payee', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(AddPayee, self).dispatch(*args, **kwargs)
+
+class ChangePayee(UpdateView):
+    template_name = 'finance/payee/change.html'
+    model = Payee
+    form_class = PayeeForm
+
+    @method_decorator(permission_required('finance.change_payee', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(ChangePayee, self).dispatch(*args, **kwargs)
+
+class DeletePayee(DeleteView):
+    template_name = 'finance/payee/delete.html'
+    model = Payee
+    fields = '__all__'
+
+    @method_decorator(permission_required('finance.delete_payee', raise_exception=True))
+    def dispatch(self, *args, **kwargs):
+        return super(DeletePayee, self).dispatch(*args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('finance_payee')
+
 
 class AddBudget(CreateView):
     template_name = 'finance/budget/add.html'

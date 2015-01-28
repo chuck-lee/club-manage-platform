@@ -3,6 +3,12 @@ from finance import views
 
 urlpatterns = patterns('',
     url(r'^$', views.index, name='finance_index'),
+
+    url(r'^payee/?$', views.payee, name='finance_payee'),
+    url(r'^payee/add/?$', views.AddPayee.as_view(), name='finance_payee_add'),
+    url(r'^payee/change/(?P<pk>\d+)/?$', views.ChangePayee.as_view(), name='finance_payee_change'),
+    url(r'^payee/delete/(?P<pk>\d+)/?$', views.DeletePayee.as_view(), name='finance_payee_delete'),
+
     url(r'^budget/?$', views.budgetIndex, name='finance_budget_index'),
     url(r'^budget/(?P<year>\d+)/?$', views.budget, name='finance_budget'),
 

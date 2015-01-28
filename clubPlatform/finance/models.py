@@ -10,6 +10,8 @@ class Payee(models.Model):
     name = models.CharField(max_length=200, verbose_name='名稱')
     def __str__(self):
         return self.name
+    def get_absolute_url(self):
+        return reverse('finance_payee')
 
 class Category(models.Model):
     name = models.CharField(max_length=200, verbose_name='名稱')
@@ -54,7 +56,7 @@ class Transaction(models.Model):
     documentSerial = models.CharField(max_length=200, blank=True, null=True, verbose_name='票據編號')
     budget = models.ForeignKey(Budget, verbose_name='預算')
     amount = models.IntegerField(verbose_name='金額')
-    payee = models.ForeignKey(Payee, blank=True, null=True, verbose_name='對象')
+    payee = models.ForeignKey(Payee, blank=True, null=True, verbose_name='關係人')
     comment = models.CharField(max_length=200, blank=True, null=True, verbose_name='附註')
     def __str__(self):
         result = "(" + str(self.date) + ") " + self.budget.category.name

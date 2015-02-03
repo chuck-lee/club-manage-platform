@@ -3,9 +3,6 @@
 {% block body %}
     <h1>財務主頁</h1>
 
-    {% if perms.finance.can_add_payee %}
-    <a href="{% url "finance_payee" %}/">收支關係人清單</a><br />
-    {% endif %}
     {% if perms.finance.can_add_category %}
     <a href="{% url "finance_category" %}/">收支科目清單</a><br />
     {% endif %}
@@ -15,7 +12,7 @@
         {% if years|length > 0 %}
             <a href="{% url "finance_budget_duplicate" %}/">新增年度預算</a><br />
         {% else %}
-            <a href="{% url "finance_transaction_add" %}/">新增單筆預算</a><br />
+            <a href="{% url "finance_budget_add" %}/">新增單筆預算</a><br />
         {% endif %}
     {% endif %}
 

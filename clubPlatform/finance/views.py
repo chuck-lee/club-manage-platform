@@ -35,13 +35,6 @@ def index(request):
     }
     return render(request, 'finance/index.html', context)
 
-@permission_required('finance.can_add_payee', raise_exception=True)
-def payee(request):
-    context = {
-        'payees': Payee.objects.order_by('id')
-    }
-    return render(request, 'finance/payee/index.html', context)
-
 @permission_required('finance.can_add_category', raise_exception=True)
 def category(request):
     context = {
@@ -133,7 +126,9 @@ def transactionYear(request, year):
             'category': transaction.budget.subCategory.category.name,
             'subCategory': transaction.budget.subCategory.name,
             'amount': transaction.budget.type * transaction.amount,
-            'payee': transaction.payee.name if request.user.is_authenticated() and transaction.payee != None else '',
+            'payee': transaction.payee.first_name if request.user.is_authenticated() and transaction.payee != None else '',
+            'submitBy': transaction.submitBy.first_name if request.user.is_authenticated() and transaction.submitBy != None else '',
+            'approveBy': transaction.approveBy.first_name if request.user.is_authenticated() and transaction.approveBy != None else '',
             'comment': transaction.comment if request.user.is_authenticated() and transaction.comment != None else '',
         })
 
@@ -176,7 +171,9 @@ def transactionYearMonth(request, year, month):
             'category': transaction.budget.subCategory.category.name,
             'subCategory': transaction.budget.subCategory.name,
             'amount': transaction.budget.type * transaction.amount,
-            'payee': transaction.payee.name if request.user.is_authenticated() and transaction.payee != None else '',
+            'payee': transaction.payee.first_name if request.user.is_authenticated() and transaction.payee != None else '',
+            'submitBy': transaction.submitBy.first_name if request.user.is_authenticated() and transaction.submitBy != None else '',
+            'approveBy': transaction.approveBy.first_name if request.user.is_authenticated() and transaction.approveBy != None else '',
             'comment': transaction.comment if request.user.is_authenticated() and transaction.comment != None else '',
         })
 
@@ -257,37 +254,6 @@ def reportYearMonth(request, year, month):
 ################################
 ########  Form classes  ########
 ################################
-class AddPayee(CreateView):
-    template_name = 'finance/payee/add.html'
-    model = Payee
-    form_class = PayeeForm
-
-    @method_decorator(permission_required('finance.add_payee', raise_exception=True))
-    def dispatch(self, *args, **kwargs):
-        return super(AddPayee, self).dispatch(*args, **kwargs)
-
-class ChangePayee(UpdateView):
-    template_name = 'finance/payee/change.html'
-    model = Payee
-    form_class = PayeeForm
-
-    @method_decorator(permission_required('finance.change_payee', raise_exception=True))
-    def dispatch(self, *args, **kwargs):
-        return super(ChangePayee, self).dispatch(*args, **kwargs)
-
-class DeletePayee(DeleteView):
-    template_name = 'finance/payee/delete.html'
-    model = Payee
-    fields = '__all__'
-
-    @method_decorator(permission_required('finance.delete_payee', raise_exception=True))
-    def dispatch(self, *args, **kwargs):
-        return super(DeletePayee, self).dispatch(*args, **kwargs)
-
-    def get_success_url(self):
-        return reverse('finance_payee')
-
-
 class AddCategory(CreateView):
     template_name = 'finance/category/addCategory.html'
     model = Category
@@ -445,6 +411,10 @@ class AddTransaction(CreateView):
     @method_decorator(permission_required('finance.add_transaction', raise_exception=True))
     def dispatch(self, *args, **kwargs):
         return super(AddTransaction, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.submitBy = self.request.user
+        return super(AddTransaction, self).form_valid(form)
 
 class ChangeTransaction(UpdateView):
     template_name = 'finance/transaction/change.html'

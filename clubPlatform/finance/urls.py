@@ -4,11 +4,6 @@ from finance import views
 urlpatterns = patterns('',
     url(r'^$', views.index, name='finance_index'),
 
-    url(r'^payee/?$', views.payee, name='finance_payee'),
-    url(r'^payee/add/?$', views.AddPayee.as_view(), name='finance_payee_add'),
-    url(r'^payee/change/(?P<pk>\d+)/?$', views.ChangePayee.as_view(), name='finance_payee_change'),
-    url(r'^payee/delete/(?P<pk>\d+)/?$', views.DeletePayee.as_view(), name='finance_payee_delete'),
-
     url(r'^category/?$', views.category, name='finance_category'),
     url(r'^category/add/?$', views.AddCategory.as_view(), name='finance_category_add'),
     url(r'^category/change/(?P<pk>\d+)/?$', views.ChangeCategory.as_view(), name='finance_category_change'),

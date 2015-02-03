@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
@@ -6,13 +7,6 @@ from django import forms
 ################################
 ###########  Models  ###########
 ################################
-class Payee(models.Model):
-    name = models.CharField(max_length=200, verbose_name='名稱', unique=True)
-    def __str__(self):
-        return self.name
-    def get_absolute_url(self):
-        return reverse('finance_payee')
-
 class Category(models.Model):
     name = models.CharField(max_length=200, verbose_name='名稱', unique=True)
     def __str__(self):
@@ -75,7 +69,9 @@ class Transaction(models.Model):
     documentSerial = models.CharField(max_length=200, blank=True, null=True, verbose_name='票據編號')
     budget = models.ForeignKey(Budget, verbose_name='預算')
     amount = models.IntegerField(verbose_name='金額')
-    payee = models.ForeignKey(Payee, blank=True, null=True, verbose_name='關係人')
+    payee = models.ForeignKey(User, related_name='payee', blank=True, null=True, verbose_name='關係人')
+    submitBy = models.ForeignKey(User, related_name='submitBy', verbose_name='申請人')
+    approveBy = models.ForeignKey(User, related_name='approveBy', blank=True, null=True, verbose_name='核可人')
     comment = models.CharField(max_length=200, blank=True, null=True, verbose_name='附註')
     def __str__(self):
         result = "(" + str(self.date) + ") " + self.budget.subCategory.category.name + \
@@ -93,11 +89,6 @@ class Transaction(models.Model):
 ################################
 #####  Model Form classes  #####
 ################################
-
-class PayeeForm(forms.ModelForm):
-    class Meta:
-        model = Payee
-        fields = '__all__'
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -117,4 +108,4 @@ class BudgetForm(forms.ModelForm):
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = '__all__'
+        exclude = ['submitBy', 'approveBy']

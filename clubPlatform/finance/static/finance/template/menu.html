@@ -1,0 +1,15 @@
+<div>
+    <p>年度</p>
+    <ul>
+        <li ng-repeat-start="year in availableYears">
+        <a ng-if="year.year == selectedYear" href="#/{{ year.year }}" class="selected">{{ year.year }}</a>
+        <a ng-if="year.year != selectedYear" href="#/{{ year.year }}" class="unselected">{{ year.year }}</a>
+        </li>
+        <ul ng-repeat-end ng-if="year.year == selectedYear">
+            <li><a href="#/{{ year.year }}/budget">預算</a></li>
+            <li><a href="#/{{ year.year }}/transaction">收支紀錄</a></li>
+            <li><a href="#/{{ year.year }}/report">收支報表</a></li>
+        </ul>
+        <div></div>
+    </ul>
+</div>

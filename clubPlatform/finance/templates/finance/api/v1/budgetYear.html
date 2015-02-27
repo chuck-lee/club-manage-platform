@@ -1,0 +1,16 @@
+{
+    "year": {{ year }},
+    "budgets": [
+    {% for budget in budgets %}
+        {
+            "id": {{ budget.id }},
+            "type": "{{ budget.type }}",
+            "category": "{{ budget.category }}",
+            "subCategory": "{{ budget.subCategory }}",
+            "amount": {{ budget.amount }},
+            "last_transaction": {{ budget.last_transaction }},
+            "last_budget": {{ budget.last_budget }}
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

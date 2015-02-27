@@ -1,0 +1,25 @@
+<div>
+    <table border="2" cellspacing="0" frame="box" rules="all" id="budgetTable">
+    <tr>
+        <th colspan="7">{{ year }}年收支報表</th>
+    </tr>
+    <tr>
+        <th>收支</th>
+        <th>科</th>
+        <th>目</th>
+        <th>預算金額</th>
+        <th>累計執行</th>
+        <th>預算餘額</th>
+        <th>執行率</th>
+    </tr>
+    <tr ng-repeat="report in reports">
+        <td class="align-center">{{ report.type }}</td>
+        <td class="align-center">{{ report.category }}</td>
+        <td class="align-center">{{ report.subCategory }}</td>
+        <td class="align-right">{{ report.budget }}</td>
+        <td class="align-right">{{ report.transaction }}</td>
+        <td class="align-right">{{ report.budget }}</td>
+        <td class="align-right">{{ report.budget }}</td>
+    </tr>
+    </table>
+</div>

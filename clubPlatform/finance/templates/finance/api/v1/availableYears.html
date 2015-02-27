@@ -1,0 +1,9 @@
+{
+    "availableYears": [
+    {% for availableYear in availableYears %}
+        {
+            "year": {{ availableYear.year }}
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

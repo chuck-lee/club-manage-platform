@@ -1,0 +1,10 @@
+{
+    "subCategorys": [
+    {% for subCategory in subCategorys %}
+        {
+            "id": {{ subCategory.id }},
+            "name": "{{ subCategory.category.name }} - {{ subCategory.name }}"
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

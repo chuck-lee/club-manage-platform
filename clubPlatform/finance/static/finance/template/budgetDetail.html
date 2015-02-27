@@ -1,0 +1,38 @@
+<div>
+    <div class="modal-header">
+        <h3 class="modal-title">預算</h3>
+    </div>
+    <div class="modal-body">
+        <table border="2" cellspacing="0" frame="box" rules="all" id="budgetDetailTable">
+        <tr>
+            <th class="align-center">年度</th>
+            <td class="align-right">
+                <input ng-model="year" class="align-right" type="text" value="{{ year }}">
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">收支</th>
+            <td class="align-right">
+                <select ng-model="budgetType" ng-options="type.value as type.name for type in types"></select>
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">科目</th>
+            <td class="align-right">
+                <select ng-model="subCategoryId" ng-options="subCategory.id as subCategory.name for subCategory in subCategorys"></select>
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">總額</th>
+            <td class="align-right">
+                <input ng-model="amount" class="align-right" type="text" value="{{ amount }}">
+            </td>
+        </tr>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="modify()">修改</button>
+        <button class="btn btn-warning" ng-click="delete()">刪除</button>
+        <button class="btn btn-warning" ng-click="cancel()">取消</button>
+    </div>
+</div>

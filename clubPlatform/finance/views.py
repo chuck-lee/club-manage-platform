@@ -15,25 +15,18 @@ from finance.forms import *
 ####### shared functions #######
 ################################
 def _get_budget_years():
-    budgets = Budget.objects.order_by('-year')
-
-    years = []
-    for budget in budgets:
-        if budget.year in years:
-            continue
-        years.append(budget.year)
-
-    return years
+    return Budget.objects.values('year').distinct().order_by('-year')
 
 ################################
 ######## View functions ########
 ################################
 
 def index(request):
-    context = {
-        'years': _get_budget_years()
-    }
-    return render(request, 'finance/index.html', context)
+#    context = {
+#        'years': _get_budget_years()
+#    }
+#    return render(request, 'finance/index.html', context)
+    return render(request, 'finance/app/index.html')
 
 @permission_required('finance.can_add_category', raise_exception=True)
 def category(request):

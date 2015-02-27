@@ -1,0 +1,37 @@
+<div>
+    <a href="#" ng-click="addBudget()">新增預算</a>
+    <table border="2" cellspacing="0" frame="box" rules="all" id="budgetTable">
+    <tr>
+        <th class="align-center" colspan="3">{{ year }}年度收支預算表</th>
+        <th class="align-center" rowspan="2">預算金額</th>
+        <th class="align-center" rowspan="2">{{ year - 1}}年度執行</th>
+        <th class="align-center" rowspan="2">{{ year - 1 }}年度預算</th>
+    </tr>
+    <tr>
+        <th class="align-center">收支</th>
+        <th class="align-center">科</th>
+        <th class="align-center">目</th>
+    </tr>
+    <tr ng-repeat="budget in budgets">
+        <td class="align-center">{{ budget.type }}</td>
+        <td class="align-center">{{ budget.category }}</td>
+
+        <td class="align-center" ng-if="budget.id">
+            <a href="#" ng-click="showBudgetDetail(budget.id)">{{ budget.subCategory }}</a>
+        </td>
+        <td class="align-center" ng-if="!budget.id">
+            {{ budget.subCategory }}
+        </td>
+
+        <td class="align-right" ng-if="budget.id">
+            <a href="#" ng-click="showBudgetDetail(budget.id)">{{ budget.amount }}</a>
+        </td>
+        <td class="align-right" ng-if="!budget.id">
+            {{ budget.amount }}
+        </td>
+
+        <td class="align-right">{{ budget.last_transaction }}</td>
+        <td class="align-right">{{ budget.last_budget }}</td>
+    </tr>
+    </table>
+</div>

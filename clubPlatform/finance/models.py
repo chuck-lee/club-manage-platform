@@ -69,7 +69,7 @@ class Transaction(models.Model):
     documentSerial = models.CharField(max_length=200, blank=True, null=True, verbose_name='票據編號')
     budget = models.ForeignKey(Budget, verbose_name='預算')
     amount = models.IntegerField(verbose_name='金額')
-    payee = models.ForeignKey(User, related_name='payee', blank=True, null=True, verbose_name='關係人')
+    payee = models.ForeignKey(User, related_name='payee', blank=True, null=True, verbose_name='對象')
     submitBy = models.ForeignKey(User, related_name='submitBy', verbose_name='申請人')
     approveBy = models.ForeignKey(User, related_name='approveBy', blank=True, null=True, verbose_name='核可人')
     comment = models.CharField(max_length=200, blank=True, null=True, verbose_name='附註')

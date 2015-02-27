@@ -1,8 +1,15 @@
 from django.conf.urls import patterns, url
-from finance import views
+from finance import views, api_v1
 
 urlpatterns = patterns('',
     url(r'^$', views.index, name='finance_index'),
+
+    url(r'^api/v1/availableYears/?$', api_v1.availableYears, name='finance_api_v1_availableYears'),
+    url(r'^api/v1/budget/(?P<year>\d+)/?$', api_v1.budgetYear, name='finance_api_v1_budget_year'),
+    url(r'^api/v1/transaction/(?P<year>\d+)/?$', api_v1.transactionYear, name='finance_api_v1_transaction_year'),
+    url(r'^api/v1/report/(?P<year>\d+)/?$', api_v1.reportYear, name='finance_api_v1_report_year'),
+    url(r'^api/v1/subCategory/?$', api_v1.subCategory, name='finance_api_v1_subCategory'),
+    url(r'^api/v1/budgetDetail/(?P<id>\d+)/?$', api_v1.budgetDetail, name='finance_api_v1_budget_detail'),
 
     url(r'^category/?$', views.category, name='finance_category'),
     url(r'^category/add/?$', views.AddCategory.as_view(), name='finance_category_add'),

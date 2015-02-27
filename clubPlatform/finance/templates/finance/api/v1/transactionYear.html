@@ -1,0 +1,20 @@
+{
+    "year": {{ year }},
+    "previousTotal": {{ previousTotal }},
+    "transactions": [
+    {% for transaction in transactions %}
+        {
+            "id": {{ transaction.id }},
+            "date": "{{ transaction.date }}",
+            "serial": "{{ transaction.documentSerial }}",
+            "payee": "{{ transaction.payee.first_name }}",
+            "submitBy": "{{ transaction.submitBy.first_name }}",
+            "approveBy": "{{ transaction.approveBy.first_name }}",
+            "category": "{{ transaction.budget.subCategory.category.name }}",
+            "subCategory": "{{ transaction.budget.subCategory.name }}",
+            "amount": {% widthratio transaction.budget.type 1 transaction.amount %},
+            "comment": "{{ transaction.comment }}"
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

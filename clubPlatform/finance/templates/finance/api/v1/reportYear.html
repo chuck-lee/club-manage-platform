@@ -1,0 +1,14 @@
+{
+    "year": {{ year }},
+    "reports": [
+    {% for report in reports %}
+        {
+            "type": "{{ report.type }}",
+            "category": "{{ report.category }}",
+            "subCategory": "{{ report.subCategory }}",
+            "budget": {{ report.budget }},
+            "transaction": {{ report.transaction }}
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

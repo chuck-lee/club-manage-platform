@@ -1,0 +1,30 @@
+<div>
+    <table border="2" cellspacing="0" frame="box" rules="all" id="transactionTable">
+    <tr>
+        <th>日期</th>
+        <th>票據編號</th>
+        <th>收入</th>
+        <th>支出</th>
+        <th>結算</th>
+        <th>科</th>
+        <th>目</th>
+        <th>對象</th>
+        <th>申請人</th>
+        <th>核可人</th>
+        <th>附註</th>
+    </tr>
+    <tr ng-repeat="transaction in transactions">
+        <td class="align-center">{{ transaction.date }}</td>
+        <td class="align-center">{{ transaction.serial }}</td>
+        <td class="align-right">{{ transaction.income }}</td>
+        <td class="align-right">{{ transaction.expense }}</td>
+        <td class="align-right">{{ transaction.total }}</td>
+        <td class="align-center">{{ transaction.category }}</td>
+        <td class="align-center">{{ transaction.subCategory }}</td>
+        <td class="align-center">{{ transaction.payee }}</td>
+        <td class="align-center">{{ transaction.submitBy }}</td>
+        <td class="align-center">{{ transaction.approveBy }}</td>
+        <td class="align-left">{{ transaction.comment }}</td>
+    </tr>
+    </table>
+</div>

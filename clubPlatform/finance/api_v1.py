@@ -21,6 +21,12 @@ def availableYears(request):
     }
     return render(request, 'finance/api/v1/availableYears.html', context)
 
+def category(request):
+    context = {
+        'categorys': Category.objects.all().order_by('id')
+    }
+    return render(request, 'finance/api/v1/category.html', context)
+
 def subCategory(request):
     context = {
         'subCategorys': SubCategory.objects.all().order_by('id')
@@ -54,8 +60,7 @@ def budgetYear(request, year):
         budgetList.append({
             'id': budget.id,
             'type': '收入' if budget.type == 1 else '支出',
-            'category': budget.subCategory.category.name,
-            'subCategory': budget.subCategory.name,
+            'subCategory': budget.subCategory,
             'amount': budget.amount,
             'last_transaction': transaction_last_year if transaction_last_year != None else 0,
             'last_budget': budget_last_year if budget_last_year != None else 0,
@@ -119,9 +124,10 @@ def reportYear(request, year):
 def budgetDetail(request, id):
     if request.method == "GET":
         # Get
-        budget = Budget.objects.get(
-            pk = int(id)
-        )
+        try:
+            budget = Budget.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
 
         context = {
             'id': id,
@@ -133,9 +139,13 @@ def budgetDetail(request, id):
         # Create
         if not request.user.has_perm('finance.add_budget'):
             raise PermissionDenied;
-            return;
+
         param = json.loads(request.body.decode("utf-8"))
-        subCategory = SubCategory.objects.get(pk = param['subCategoryId'])
+
+        try:
+            subCategory = SubCategory.objects.get(pk = param['subCategoryId'])
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
 
         try:
             budget = Budget.objects.get(year = param['year'], type = param['type'], subCategory = subCategory)
@@ -148,7 +158,7 @@ def budgetDetail(request, id):
         # Update
         if not request.user.has_perm('finance.change_budget'):
             raise PermissionDenied;
-            return;
+
         param = json.loads(request.body.decode("utf-8"))
 
         try:
@@ -156,9 +166,14 @@ def budgetDetail(request, id):
         except ObjectDoesNotExist:
             raise SuspiciousOperation()
 
+        try:
+            subCategory = SubCategory.objects.get(pk = param['subCategoryId'])
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
         budget.year = param['year']
         budget.type = param['type']
-        budget.subCategory = SubCategory.objects.get(pk = param['subCategoryId'])
+        budget.subCategory = subCategory
         budget.amount = param['amount']
         budget.save()
         return HttpResponse()
@@ -167,12 +182,142 @@ def budgetDetail(request, id):
         if not request.user.has_perm('finance.delete_budget'):
             raise PermissionDenied;
             return;
+
         try:
             budget = Budget.objects.get(pk = id)
         except ObjectDoesNotExist:
             raise SuspiciousOperation()
 
         budget.delete()
+
+        return HttpResponse()
+
+    return HttpResponseNotFound()
+
+def categoryDetail(request, id):
+    if request.method == "GET":
+        # Get
+        try:
+            category = Category.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        context = {
+            'id': id,
+            'category': category
+        }
+
+        return render(request, 'finance/api/v1/categoryDetail.html', context)
+    elif request.method == "POST":
+        # Create
+        if not request.user.has_perm('finance.add_category'):
+            raise PermissionDenied;
+
+        param = json.loads(request.body.decode("utf-8"))
+
+        try:
+            category = Category.objects.get(name = param['name'])
+            raise SuspiciousOperation()
+        except ObjectDoesNotExist:
+            category = Category(name = param['name'])
+            category.save()
+            return HttpResponse()
+    elif request.method == "PUT":
+        # Update
+        if not request.user.has_perm('finance.change_category'):
+            raise PermissionDenied;
+
+        param = json.loads(request.body.decode("utf-8"))
+
+        try:
+            category = Category.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        category.name = param['name']
+        category.save()
+        return HttpResponse()
+    elif request.method == "DELETE":
+        # Delete
+        if not request.user.has_perm('finance.delete_category'):
+            raise PermissionDenied;
+
+        try:
+            category = Category.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        category.delete()
+
+        return HttpResponse()
+
+    return HttpResponseNotFound()
+
+def subCategoryDetail(request, id):
+    if request.method == "GET":
+        # Get
+        try:
+            subCategory = SubCategory.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        context = {
+            'id': id,
+            'subCategory': subCategory
+        }
+
+        return render(request, 'finance/api/v1/subCategoryDetail.html', context)
+    elif request.method == "POST":
+        # Create
+        if not request.user.has_perm('finance.add_category'):
+            raise PermissionDenied;
+
+        param = json.loads(request.body.decode("utf-8"))
+
+        try:
+            category = Category.objects.get(pk = param['categoryId'])
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        try:
+            subCategory = SubCategory.objects.get(category = category, name = param['name'])
+            raise SuspiciousOperation()
+        except ObjectDoesNotExist:
+            subCategory = SubCategory(category = category, name = param['name'])
+            subCategory.save()
+            return HttpResponse()
+    elif request.method == "PUT":
+        # Update
+        if not request.user.has_perm('finance.change_category'):
+            raise PermissionDenied;
+
+        param = json.loads(request.body.decode("utf-8"))
+
+        try:
+            subCategory = SubCategory.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        try:
+            category = Category.objects.get(pk = param['categoryId'])
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        subCategory.name = param['name']
+        subCategory.category = category
+        subCategory.save()
+        return HttpResponse()
+    elif request.method == "DELETE":
+        # Delete
+        if not request.user.has_perm('finance.delete_budget'):
+            raise PermissionDenied;
+
+        try:
+            subCategory = SubCategory.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        subCategory.delete()
 
         return HttpResponse()
 

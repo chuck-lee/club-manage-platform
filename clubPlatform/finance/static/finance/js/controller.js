@@ -3,6 +3,7 @@ financeControllers.controller('transactionController', transactionController);
 financeControllers.controller('budgetController', budgetController);
 financeControllers.controller('reportController', reportController);
 financeControllers.controller('menuController', menuController);
+financeControllers.controller('categoryController', categoryController);
 
 financeControllers.config(['$httpProvider', function($httpProvider) {
     $httpProvider.defaults.xsrfCookieName = 'csrftoken';
@@ -13,7 +14,7 @@ function commalizeValue(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function transactionController($scope, $http, $stateParams, year)
+function transactionController($scope, $http, $stateParams, $modal, $state, year)
 {
     $http
     .get('api/v1/transaction/' + year)
@@ -54,9 +55,9 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
         var currentReport = null;
         while (currentReport = data.budgets.pop()) {
             if (prevReport) {
-                if (prevReport.category != currentReport.category) {
+                if (prevReport.categoryId != currentReport.categoryId) {
                     budgets.unshift({
-                        category: prevReport.category,
+                        category: prevReport.categoryName,
                         amount: commalizeValue(categoryAmount),
                         last_budget: commalizeValue(categoryLastReport),
                         last_transaction: commalizeValue(categoryLastTransaction)
@@ -81,7 +82,7 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
 
             budgets.unshift({
                 id: currentReport.id,
-                subCategory: currentReport.subCategory,
+                subCategory: currentReport.subCategoryName,
                 amount: commalizeValue(currentReport.amount),
                 last_budget: commalizeValue(currentReport.last_budget),
                 last_transaction: commalizeValue(currentReport.last_transaction)
@@ -99,7 +100,7 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
         }
 
         budgets.unshift({
-            category: prevReport.category,
+            category: prevReport.categoryName,
             amount: commalizeValue(categoryAmount),
             last_budget: commalizeValue(categoryLastReport),
             last_transaction: commalizeValue(categoryLastTransaction)
@@ -153,8 +154,7 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
 
 
                     $scope.modify = function() {
-                        //alert("Modify: " + $scope.id + "/" + $scope.year + "/" + JSON.stringify($scope.budgetType) + "/" + $scope.subCategoryId + "/" + $scope.amount);
-                        $http.put('api/v1/budgetDetail/' + $scope.id + '/', {
+                        $http.put('api/v1/budgetDetail/' + budgetId + '/', {
                             'year': $scope.year,
                             'type': $scope.budgetType,
                             'subCategoryId': $scope.subCategoryId,
@@ -171,7 +171,7 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
                     }
 
                     $scope.delete = function() {
-                        $http.delete('api/v1/budgetDetail/' + $scope.id + '/')
+                        $http.delete('api/v1/budgetDetail/' + budgetId + '/')
                         .success(function() {
                             $state.reload();
                             $modalInstance.dismiss($scope.id);
@@ -188,7 +188,7 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
             }],
             resolve: {
                 budgetId: function() {
-                    return budgetId
+                    return budgetId;
                 }
             }
         });
@@ -247,7 +247,7 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
     };
 }
 
-function reportController($scope, $http, $stateParams, year) {
+function reportController($scope, $http, $stateParams, $modal, $state, year) {
     $http.get('api/v1/report/' + year)
     .success(function(data, status, headers, config) {
         var reports = [];
@@ -322,4 +322,203 @@ function menuController($scope, $http, $stateParams) {
     })
     .error(function(data, status, headers, config) {
     });
+}
+
+function categoryController($scope, $http, $stateParams, $modal, $state) {
+    $http.get('api/v1/category')
+    .success(function(data, status, headers, config) {
+        $scope.categorys = data.categorys;
+        for (var i = 0; i < $scope.categorys.length; i++) {
+            $scope.categorys[i].type = 'category';
+        }
+
+        $http.get('api/v1/subCategory')
+        .success(function(data, status, headers, config) {
+            var subCategory = null;
+            while (subCategory = data.subCategorys.pop()) {
+                for (var i = 0; i < $scope.categorys.length; i++) {
+                    if ($scope.categorys[i].type == 'category' &&
+                        $scope.categorys[i].id == subCategory.categoryId) {
+                        $scope.categorys.splice(i + 1, 0, {
+                            "id": subCategory.id,
+                            "name": subCategory.name
+                        });
+                    }
+                }
+            }
+        })
+        .error(function(data, status, headers, config) {
+        });
+    })
+    .error(function(data, status, headers, config) {
+    });
+
+    $scope.addCategory = function() {
+        $modal.open({
+            templateUrl: '/static/finance/template/addCategory.html',
+            controller: ['$scope', '$http', '$modalInstance',
+                function ($scope, $http, $modalInstance) {
+                    $scope.add = function() {
+                        $http.post('api/v1/categoryDetail/0/', {
+                            'name': $scope.name,
+                        })
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss();
+                    }
+            }]
+        });
+    };
+
+    $scope.addSubCategory = function() {
+        $modal.open({
+            templateUrl: '/static/finance/template/addSubCategory.html',
+            controller: ['$scope', '$http', '$modalInstance',
+                function ($scope, $http, $modalInstance) {
+                    $http.get('api/v1/category')
+                    .success(function(data, status, headers, config) {
+                        $scope.categorys = data.categorys;
+                    })
+                    .error(function(data, status, headers, config) {
+                    });
+
+                    $scope.add = function() {
+                        $http.post('api/v1/subCategoryDetail/0/', {
+                            'categoryId': $scope.categoryId,
+                            'name': $scope.name,
+                        })
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss();
+                    }
+            }]
+        });
+    };
+
+    $scope.showCategoryDetail = function(categoryId) {
+        $modal.open({
+            templateUrl: '/static/finance/template/categoryDetail.html',
+            controller: ['$scope', '$http', '$modalInstance', 'categoryId',
+                function ($scope, $http, $modalInstance, categoryId) {
+                    $http.get('api/v1/categoryDetail/' + categoryId + '/')
+                    .success(function(data, status, headers, config) {
+                        $scope.name = data.name;
+                    })
+                    .error(function(data, status, headers, config) {
+                    });;
+
+                    $scope.modify = function() {
+                        $http.put('api/v1/categoryDetail/' + categoryId + '/', {
+                            'name': $scope.name
+                        })
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.delete = function() {
+                        $http.delete('api/v1/categoryDetail/' + categoryId + '/')
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss($scope.id);
+                    }
+            }],
+            resolve: {
+                categoryId: function() {
+                    return categoryId;
+                }
+            }
+        });
+    };
+
+    $scope.showSubCategoryDetail = function(subCategoryId) {
+        $modal.open({
+            templateUrl: '/static/finance/template/subCategoryDetail.html',
+            controller: ['$scope', '$http', '$modalInstance', 'subCategoryId',
+                function ($scope, $http, $modalInstance, subCategoryId) {
+                    $http.get('api/v1/category')
+                    .success(function(data, status, headers, config) {
+                        $scope.categorys = data.categorys;
+
+                        $http.get('api/v1/subCategoryDetail/' + subCategoryId + '/')
+                        .success(function(data, status, headers, config) {
+                            $scope.categoryId = data.categoryId;
+                            $scope.name = data.name;
+                        })
+                        .error(function(data, status, headers, config) {
+                        });;
+                    })
+                    .error(function(data, status, headers, config) {
+                    });
+
+                    $scope.modify = function() {
+                        $http.put('api/v1/subCategoryDetail/' + subCategoryId + '/', {
+                            'categoryId': $scope.categoryId,
+                            'name': $scope.name
+                        })
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.delete = function() {
+                        $http.delete('api/v1/subCategoryDetail/' + subCategoryId + '/')
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss($scope.id);
+                    }
+            }],
+            resolve: {
+                subCategoryId: function() {
+                    return subCategoryId;
+                }
+            }
+        });
+    };
 }

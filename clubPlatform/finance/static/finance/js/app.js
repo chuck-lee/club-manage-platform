@@ -6,7 +6,7 @@ var financeApp = angular.module('financeApp', [
 financeApp.config(['$stateProvider', '$urlRouterProvider',
     function($stateProvider, $urlRouterProvider) {
         $urlRouterProvider
-            .when('/:year', '/:year/budget')
+            .when('/:year/', '/:year/budget')
             .otherwise('/' + (new Date().getFullYear()) + '/budget');
 
         $stateProvider
@@ -52,6 +52,19 @@ financeApp.config(['$stateProvider', '$urlRouterProvider',
                     "dataView": {
                         templateUrl: '/static/finance/template/report.html',
                         controller: 'reportController'
+                    }
+                }
+            })
+            .state('category', {
+                url: '/category',
+                views: {
+                    "menuView": {
+                        templateUrl: '/static/finance/template/menu.html',
+                        controller: 'menuController'
+                    },
+                    "dataView": {
+                        templateUrl: '/static/finance/template/category.html',
+                        controller: 'categoryController'
                     }
                 }
             })

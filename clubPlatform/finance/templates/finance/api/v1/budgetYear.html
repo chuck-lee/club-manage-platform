@@ -5,8 +5,10 @@
         {
             "id": {{ budget.id }},
             "type": "{{ budget.type }}",
-            "category": "{{ budget.category }}",
-            "subCategory": "{{ budget.subCategory }}",
+            "categoryId": {{ budget.subCategory.category.id }},
+            "categoryName": "{{ budget.subCategory.category.name }}",
+            "subCategoryId": {{ budget.subCategory.id }},
+            "subCategoryName": "{{ budget.subCategory.name }}",
             "amount": {{ budget.amount }},
             "last_transaction": {{ budget.last_transaction }},
             "last_budget": {{ budget.last_budget }}

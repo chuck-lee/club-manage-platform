@@ -1,0 +1,10 @@
+{
+    "categorys": [
+    {% for category in categorys %}
+        {
+            "id": {{ category.id }},
+            "name": "{{ category.name }}"
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

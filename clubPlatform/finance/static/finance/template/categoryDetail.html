@@ -1,0 +1,20 @@
+<div>
+    <div class="modal-header">
+        <h3 class="modal-title">科</h3>
+    </div>
+    <div class="modal-body">
+        <table border="2" cellspacing="0" frame="box" rules="all" id="categoryDetailTable">
+        <tr>
+            <th class="align-center">名稱</th>
+            <td class="align-right">
+                <input ng-model="name" class="align-right" type="text" value="{{ name }}">
+            </td>
+        </tr>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="modify()">修改</button>
+        <button class="btn btn-warning" ng-click="delete()">刪除</button>
+        <button class="btn btn-warning" ng-click="cancel()">取消</button>
+    </div>
+</div>

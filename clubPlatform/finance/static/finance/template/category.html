@@ -1,0 +1,22 @@
+<div>
+    <a href="#" ng-click="addCategory()">新增科</a>
+    <br />
+    <a href="#" ng-click="addSubCategory()">新增目</a>
+    <table border="2" cellspacing="0" frame="box" rules="all" id="categoryTable">
+    <tr>
+        <th>科</th>
+        <th>目</th>
+    </tr>
+    <tr ng-repeat="category in categorys">
+        <td class="align-center" ng-if="category.type == 'category'">
+            <a href="#" ng-click="showCategoryDetail(category.id)">{{ category.name }}</a>
+        </td>
+        <td class="align-center" ng-if="category.type == 'category'"></td>
+
+        <td class="align-center" ng-if="category.type != 'category'"></td>
+        <td class="align-center" ng-if="category.type != 'category'">
+            <a href="#" ng-click="showSubCategoryDetail(category.id)">{{ category.name }}</a>
+        </td>
+    </tr>
+    </table>
+</div>

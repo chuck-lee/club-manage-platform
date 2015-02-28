@@ -3,7 +3,9 @@
     {% for subCategory in subCategorys %}
         {
             "id": {{ subCategory.id }},
-            "name": "{{ subCategory.category.name }} - {{ subCategory.name }}"
+            "categoryId": {{ subCategory.category.id }},
+            "categoryName": "{{ subCategory.category.name }}",
+            "name": "{{ subCategory.name }}"
         }{% if not forloop.last %},{% endif %}
     {% endfor %}
     ]

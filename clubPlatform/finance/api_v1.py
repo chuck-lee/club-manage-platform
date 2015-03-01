@@ -17,18 +17,21 @@ from finance.forms import *
 ################################
 def availableYears(request):
     context = {
+        'user': request.user,
         'availableYears': Budget.objects.values('year').distinct().order_by('-year')
     }
     return render(request, 'finance/api/v1/availableYears.html', context)
 
 def category(request):
     context = {
+        'user': request.user,
         'categorys': Category.objects.all().order_by('id')
     }
     return render(request, 'finance/api/v1/category.html', context)
 
 def subCategory(request):
     context = {
+        'user': request.user,
         'subCategorys': SubCategory.objects.all().order_by('id')
     }
     return render(request, 'finance/api/v1/subCategory.html', context)
@@ -67,6 +70,7 @@ def budgetYear(request, year):
         })
 
     context = {
+        'user': request.user,
         'year': year,
         'budgets': budgetList
     }
@@ -88,6 +92,7 @@ def transactionYear(request, year):
     previous_total = previous_income - previous_expense
 
     context = {
+        'user': request.user,
         'year': year,
         'previousTotal': previous_total,
         'transactions': Transaction.objects.filter(
@@ -116,6 +121,7 @@ def reportYear(request, year):
         })
 
     context = {
+        'user': request.user,
         'year': year,
         'reports': reports,
     }
@@ -130,6 +136,7 @@ def budgetDetail(request, id):
             raise SuspiciousOperation()
 
         context = {
+            'user': request.user,
             'id': id,
             'budget': budget
         }
@@ -203,6 +210,7 @@ def categoryDetail(request, id):
             raise SuspiciousOperation()
 
         context = {
+            'user': request.user,
             'id': id,
             'category': category
         }
@@ -262,6 +270,7 @@ def subCategoryDetail(request, id):
             raise SuspiciousOperation()
 
         context = {
+            'user': request.user,
             'id': id,
             'subCategory': subCategory
         }

@@ -7,13 +7,20 @@
             "id": {{ transaction.id }},
             "date": "{{ transaction.date }}",
             "serial": "{{ transaction.documentSerial }}",
-            "payee": "{{ transaction.payee.first_name }}",
-            "submitBy": "{{ transaction.submitBy.first_name }}",
-            "approveBy": "{{ transaction.approveBy.first_name }}",
             "category": "{{ transaction.budget.subCategory.category.name }}",
             "subCategory": "{{ transaction.budget.subCategory.name }}",
             "amount": {% widthratio transaction.budget.type 1 transaction.amount %},
+            {% if user.is_authenticated %}
+            "payee": "{{ transaction.payee.first_name }}",
+            "submitBy": "{{ transaction.submitBy.first_name }}",
+            "approveBy": "{{ transaction.approveBy.first_name }}",
             "comment": "{{ transaction.comment }}"
+            {% else %}
+            "payee": "",
+            "submitBy": "",
+            "approveBy": "",
+            "comment": ""
+            {% endif %}
         }{% if not forloop.last %},{% endif %}
     {% endfor %}
     ]

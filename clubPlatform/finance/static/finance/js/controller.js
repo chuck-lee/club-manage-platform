@@ -20,24 +20,73 @@ function percentlizeValue(value) {
 
 function transactionController($scope, $http, $stateParams, $modal, $state, year)
 {
+    originData = {
+        total: 0,
+        transactions: []
+    };
+
+    function getMonthFromDate(date) {
+        return parseInt(date.split('-')[1], 10);
+    }
+
+    function updateTransactionList() {
+        var previousAmount = originData.total;
+        var originalTransactions = originData.transactions;
+
+        var transactions = [];
+        var i = 0;
+        for (i = 0;
+             i < originalTransactions.length &&
+             getMonthFromDate(originalTransactions[i].date) < $scope.monthStart;
+             i++) {
+                previousAmount += originalTransactions[i].amount;
+        }
+
+        var total = previousAmount;
+        for (; i < originalTransactions.length &&
+             getMonthFromDate(originalTransactions[i].date) <= $scope.monthEnd;
+             i++) {
+                var transaction = originalTransactions[i];
+                var amount = transaction.amount;
+
+                total += amount;
+                transaction.total = commalizeValue(total);
+                transaction.income = commalizeValue(amount > 0 ? amount : 0);
+                transaction.expense = commalizeValue(amount < 0 ? -amount : 0);
+
+                transactions.push(transaction);
+        }
+
+        $scope.previousAmount = commalizeValue(previousAmount);
+        $scope.transactions = transactions;
+    }
+
+    $scope.$watch("monthStart", function(newValue, oldValue) {
+        if (newValue > $scope.monthEnd) {
+            $scope.monthEnd = newValue;
+        }
+
+        updateTransactionList();
+    });
+
+    $scope.$watch("monthEnd", function(newValue, oldValue) {
+        if (newValue < $scope.monthStart) {
+            $scope.monthStart = newValue;
+        }
+
+        updateTransactionList();
+    });
+
     $http
     .get('api/v1/transaction/' + year)
     .success(function(data, status, headers, config) {
+        originData.total = data.previousTotal;
+        originData.transactions = data.transactions;
+
         $scope.year = year;
-
-        var total = data.previousTotal;
-        var transactions = data.transactions;
-
-        $scope.previousAmount = commalizeValue(total);
-
-        for (var i = 0; i < transactions.length; i++) {
-            amount = transactions[i].amount;
-            total += amount;
-            transactions[i].total = commalizeValue(total);
-            transactions[i].income = commalizeValue(amount > 0 ? amount : 0);
-            transactions[i].expense = commalizeValue(amount < 0 ? -amount : 0);
-        }
-        $scope.transactions = transactions;
+        $scope.monthStart = 1;
+        $scope.monthEnd = 12;
+        updateTransactionList();
     })
     .error(function(data, status, headers, config) {
     });

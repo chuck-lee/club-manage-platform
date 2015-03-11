@@ -1,5 +1,10 @@
 <div>
-    <a href="#" ng-click="addTransaction()">新增收支</a>
+    <a href="#" ng-click="addTransaction()">新增收支</a><br />
+    顯示
+    <select ng-model="monthStart" ng-options="i as i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]"></select>
+    月至
+    <select ng-model="monthEnd" ng-options="i as i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]"></select>
+    月
     <table border="2" cellspacing="0" frame="box" rules="all" id="transactionTable">
     <tr>
         <th class="align-center">日期</th>

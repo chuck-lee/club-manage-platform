@@ -5,7 +5,7 @@
     {% for transaction in transactions %}
         {
             "id": {{ transaction.id }},
-            "date": "{{ transaction.date }}",
+            "date": "{{ transaction.date | date:"Y-m-d" }}",
             "serial": "{{ transaction.documentSerial }}",
             "category": "{{ transaction.budget.subCategory.category.name }}",
             "subCategory": "{{ transaction.budget.subCategory.name }}",

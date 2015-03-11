@@ -1,6 +1,6 @@
 {
     "id": {{ id }},
-    "date": "{{ transaction.date.year }}-{{ transaction.date.month }}-{{ transaction.date.day }}",
+    "date": "{{ transaction.date | date:"Y-m-d" }}",
     "serial": "{{ transaction.documentSerial }}",
     "budgetId": {{ transaction.budget.id }},
     {% if transaction.payee %}

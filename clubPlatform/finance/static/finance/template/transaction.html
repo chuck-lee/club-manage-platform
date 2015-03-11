@@ -1,30 +1,80 @@
 <div>
+    <a href="#" ng-click="addTransaction()">新增收支</a>
     <table border="2" cellspacing="0" frame="box" rules="all" id="transactionTable">
     <tr>
-        <th>日期</th>
-        <th>票據編號</th>
-        <th>收入</th>
-        <th>支出</th>
-        <th>結算</th>
-        <th>科</th>
-        <th>目</th>
-        <th>對象</th>
-        <th>申請人</th>
-        <th>核可人</th>
-        <th>附註</th>
+        <th class="align-center">日期</th>
+        <th class="align-center">票據編號</th>
+        <th class="align-center">收入</th>
+        <th class="align-center">支出</th>
+        <th class="align-center">結算</th>
+        <th class="align-center">科</th>
+        <th class="align-center">目</th>
+        <th class="align-center">對象</th>
+        <th class="align-center">申請人</th>
+        <th class="align-center">核可人</th>
+        <th class="align-center">附註</th>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td class="align-center">{{ previousAmount }}</td>
+        <td class="align-center">前期結餘</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
     </tr>
     <tr ng-repeat="transaction in transactions">
-        <td class="align-center">{{ transaction.date }}</td>
-        <td class="align-center">{{ transaction.serial }}</td>
-        <td class="align-right">{{ transaction.income }}</td>
-        <td class="align-right">{{ transaction.expense }}</td>
-        <td class="align-right">{{ transaction.total }}</td>
-        <td class="align-center">{{ transaction.category }}</td>
-        <td class="align-center">{{ transaction.subCategory }}</td>
-        <td class="align-center">{{ transaction.payee }}</td>
+        <td class="align-center">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.date }}
+            </a>
+        </td>
+        <td class="align-center">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.serial }}
+            </a>
+        </td>
+        <td class="align-right">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.income }}
+            </a>
+        </td>
+        <td class="align-right">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.expense }}
+            </a>
+        </td>
+        <td class="align-right">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.total }}
+            </a>
+        </td>
+        <td class="align-center">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.category }}
+            </a>
+        </td>
+        <td class="align-center">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.subCategory }}
+            </a>
+        </td>
+        <td class="align-center">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.payee }}
+            </a>
+        </td>
         <td class="align-center">{{ transaction.submitBy }}</td>
         <td class="align-center">{{ transaction.approveBy }}</td>
-        <td class="align-left">{{ transaction.comment }}</td>
+        <td class="align-left">
+            <a href="#" ng-click="showTransactionDetail(transaction.id)">
+                {{ transaction.comment }}
+            </a>
+        </td>
     </tr>
     </table>
 </div>

@@ -14,6 +14,10 @@ function commalizeValue(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+function percentlizeValue(value) {
+    return (value * 100).toFixed(2) + "%";
+}
+
 function transactionController($scope, $http, $stateParams, $modal, $state, year)
 {
     $http
@@ -23,10 +27,9 @@ function transactionController($scope, $http, $stateParams, $modal, $state, year
 
         var total = data.previousTotal;
         var transactions = data.transactions;
-        transactions.unshift({
-            total: commalizeValue(total),
-            category: '前期結餘'
-        });
+
+        $scope.previousAmount = commalizeValue(total);
+
         for (var i = 1; i < transactions.length; i++) {
             amount = transactions[i].amount;
             total += amount;
@@ -51,13 +54,13 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
         var typeAmount = 0,
             typeLastReport = 0,
             typeLastTransaction = 0;
-        var prevReport = null;
-        var currentReport = null;
-        while (currentReport = data.budgets.pop()) {
-            if (prevReport) {
-                if (prevReport.categoryId != currentReport.categoryId) {
+        var prevBudget = null;
+        var currentBudget = null;
+        while (currentBudget = data.budgets.pop()) {
+            if (prevBudget) {
+                if (prevBudget.categoryId != currentBudget.categoryId) {
                     budgets.unshift({
-                        category: prevReport.categoryName,
+                        category: prevBudget.categoryName,
                         amount: commalizeValue(categoryAmount),
                         last_budget: commalizeValue(categoryLastReport),
                         last_transaction: commalizeValue(categoryLastTransaction)
@@ -67,9 +70,9 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
                     categoryLastTransaction = 0;
                 }
 
-                if (prevReport.type != currentReport.type) {
+                if (prevBudget.type != currentBudget.type) {
                     budgets.unshift({
-                        type: prevReport.type,
+                        type: prevBudget.type,
                         amount: commalizeValue(typeAmount),
                         last_budget: commalizeValue(typeLastReport),
                         last_transaction: commalizeValue(typeLastTransaction)
@@ -81,36 +84,38 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
             }
 
             budgets.unshift({
-                id: currentReport.id,
-                subCategory: currentReport.subCategoryName,
-                amount: commalizeValue(currentReport.amount),
-                last_budget: commalizeValue(currentReport.last_budget),
-                last_transaction: commalizeValue(currentReport.last_transaction)
+                id: currentBudget.id,
+                subCategory: currentBudget.subCategoryName,
+                amount: commalizeValue(currentBudget.amount),
+                last_budget: commalizeValue(currentBudget.last_budget),
+                last_transaction: commalizeValue(currentBudget.last_transaction)
             });
 
-            categoryAmount += currentReport.amount;
-            categoryLastReport += currentReport.last_budget;
-            categoryLastTransaction += currentReport.last_transaction;
+            categoryAmount += currentBudget.amount;
+            categoryLastReport += currentBudget.last_budget;
+            categoryLastTransaction += currentBudget.last_transaction;
 
-            typeAmount += currentReport.amount;
-            typeLastReport += currentReport.last_budget;
-            typeLastTransaction += currentReport.last_transaction;
+            typeAmount += currentBudget.amount;
+            typeLastReport += currentBudget.last_budget;
+            typeLastTransaction += currentBudget.last_transaction;
 
-            prevReport = currentReport;
+            prevBudget = currentBudget;
         }
 
-        budgets.unshift({
-            category: prevReport.categoryName,
-            amount: commalizeValue(categoryAmount),
-            last_budget: commalizeValue(categoryLastReport),
-            last_transaction: commalizeValue(categoryLastTransaction)
-        });
-        budgets.unshift({
-            type: prevReport.type,
-            amount: commalizeValue(typeAmount),
-            last_budget: commalizeValue(typeLastReport),
-            last_transaction: commalizeValue(typeLastTransaction)
-        });
+        if (prevBudget) {
+            budgets.unshift({
+                category: prevBudget.categoryName,
+                amount: commalizeValue(categoryAmount),
+                last_budget: commalizeValue(categoryLastReport),
+                last_transaction: commalizeValue(categoryLastTransaction)
+            });
+            budgets.unshift({
+                type: prevBudget.type,
+                amount: commalizeValue(typeAmount),
+                last_budget: commalizeValue(typeLastReport),
+                last_transaction: commalizeValue(typeLastTransaction)
+            });
+        }
 
         $scope.budgets = budgets;
         $scope.year = year;
@@ -248,6 +253,18 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
 }
 
 function reportController($scope, $http, $stateParams, $modal, $state, year) {
+    function reportObject(type, category, subCategory, budget, transaction) {
+        return {
+            type: type,
+            category: category,
+            subCategory:subCategory,
+            budget: commalizeValue(budget),
+            transaction: commalizeValue(transaction),
+            remain: commalizeValue(budget - transaction),
+            exeRate: percentlizeValue(budget ? transaction / budget : 0)
+        };
+    }
+
     $http.get('api/v1/report/' + year)
     .success(function(data, status, headers, config) {
         var reports = [];
@@ -261,31 +278,28 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
         while (currentReport = data.reports.pop()) {
             if (prevReport) {
                 if (prevReport.category != currentReport.category) {
-                    reports.unshift({
-                        category: prevReport.category,
-                        budget: commalizeValue(categoryBudget),
-                        transaction: commalizeValue(categoryTransaction)
-                    })
+                    reports.unshift(
+                        reportObject('', prevReport.category, '',
+                                     categoryBudget, categoryTransaction)
+                    )
                     categoryBudget = 0;
                     categoryTransaction = 0;
                 }
 
                 if (prevReport.type != currentReport.type) {
-                    reports.unshift({
-                        type: prevReport.type,
-                        budget: commalizeValue(typeBudget),
-                        transaction: commalizeValue(typeTransaction)
-                    })
+                    reports.unshift(
+                        reportObject(prevReport.type, '', '',
+                                     typeBudget, typeTransaction)
+                    )
                     typeBudget = 0;
                     typeTransaction = 0;
                 }
             }
 
-            reports.unshift({
-                subCategory: currentReport.subCategory,
-                budget: commalizeValue(currentReport.budget),
-                transaction: commalizeValue(currentReport.transaction)
-            });
+            reports.unshift(
+                reportObject('', '', currentReport.subCategory,
+                             currentReport.budget, currentReport.transaction)
+            );
 
             categoryBudget += currentReport.budget;
             categoryTransaction += currentReport.transaction;
@@ -296,16 +310,16 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
             prevReport = currentReport;
         }
 
-        reports.unshift({
-            category: prevReport.category,
-            budget: commalizeValue(categoryBudget),
-            transaction: commalizeValue(categoryTransaction)
-        });
-        reports.unshift({
-            type: prevReport.type,
-            budget: commalizeValue(typeBudget),
-            transaction: commalizeValue(typeTransaction)
-        });
+        if (prevReport) {
+            reports.unshift(
+                reportObject('', prevReport.category, '',
+                             categoryBudget, categoryTransaction)
+            );
+            reports.unshift(
+                reportObject('', '', prevReport.subCategory,
+                             prevReport.budget, prevReport.transaction)
+            );
+        }
 
         $scope.reports = reports;
         $scope.year = year;

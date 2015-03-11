@@ -10,14 +10,6 @@ financeControllers.config(['$httpProvider', function($httpProvider) {
     $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 }]);
 
-function commalizeValue(value) {
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function percentlizeValue(value) {
-    return (value * 100).toFixed(2) + "%";
-}
-
 function transactionController($scope, $http, $stateParams, $modal, $state, year)
 {
     originData = {
@@ -50,14 +42,14 @@ function transactionController($scope, $http, $stateParams, $modal, $state, year
                 var amount = transaction.amount;
 
                 total += amount;
-                transaction.total = commalizeValue(total);
-                transaction.income = commalizeValue(amount > 0 ? amount : 0);
-                transaction.expense = commalizeValue(amount < 0 ? -amount : 0);
+                transaction.total = total;
+                transaction.income = amount > 0 ? amount : 0;
+                transaction.expense = amount < 0 ? -amount : 0;
 
                 transactions.push(transaction);
         }
 
-        $scope.previousAmount = commalizeValue(previousAmount);
+        $scope.previousAmount = previousAmount;
         $scope.transactions = transactions;
     }
 
@@ -289,9 +281,9 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
                 if (prevBudget.categoryId != currentBudget.categoryId) {
                     budgets.unshift({
                         category: prevBudget.categoryName,
-                        amount: commalizeValue(categoryAmount),
-                        last_budget: commalizeValue(categoryLastReport),
-                        last_transaction: commalizeValue(categoryLastTransaction)
+                        amount: categoryAmount,
+                        last_budget: categoryLastReport,
+                        last_transaction: categoryLastTransaction
                     })
                     categoryAmount = 0;
                     categoryLastReport = 0;
@@ -301,9 +293,9 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
                 if (prevBudget.type != currentBudget.type) {
                     budgets.unshift({
                         type: prevBudget.type,
-                        amount: commalizeValue(typeAmount),
-                        last_budget: commalizeValue(typeLastReport),
-                        last_transaction: commalizeValue(typeLastTransaction)
+                        amount: typeAmount,
+                        last_budget: typeLastReport,
+                        last_transaction: typeLastTransaction
                     })
                     typeAmount = 0;
                     typeLastReport = 0;
@@ -314,9 +306,9 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
             budgets.unshift({
                 id: currentBudget.id,
                 subCategory: currentBudget.subCategoryName,
-                amount: commalizeValue(currentBudget.amount),
-                last_budget: commalizeValue(currentBudget.last_budget),
-                last_transaction: commalizeValue(currentBudget.last_transaction)
+                amount: currentBudget.amount,
+                last_budget: currentBudget.last_budget,
+                last_transaction: currentBudget.last_transaction
             });
 
             categoryAmount += currentBudget.amount;
@@ -333,15 +325,15 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
         if (prevBudget) {
             budgets.unshift({
                 category: prevBudget.categoryName,
-                amount: commalizeValue(categoryAmount),
-                last_budget: commalizeValue(categoryLastReport),
-                last_transaction: commalizeValue(categoryLastTransaction)
+                amount: categoryAmount,
+                last_budget: categoryLastReport,
+                last_transaction: categoryLastTransaction
             });
             budgets.unshift({
                 type: prevBudget.type,
-                amount: commalizeValue(typeAmount),
-                last_budget: commalizeValue(typeLastReport),
-                last_transaction: commalizeValue(typeLastTransaction)
+                amount: typeAmount,
+                last_budget: typeLastReport,
+                last_transaction: typeLastTransaction
             });
         }
 
@@ -485,12 +477,12 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
             type: type,
             category: category,
             subCategory:subCategory,
-            budget: commalizeValue(budget),
-            current: commalizeValue(current),
-            last: commalizeValue(last),
-            total: commalizeValue(total),
-            remain: commalizeValue(budget - total),
-            exeRate: percentlizeValue(budget ? total / budget : 0)
+            budget: budget,
+            current: current,
+            last: last,
+            total: total,
+            remain: budget - total,
+            exeRate: budget ? total / budget : 0
         };
     }
 
@@ -514,6 +506,11 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
                 typeLast = 0;
             var prevReport = null;
             var currentReport = null;
+            var summary = {
+                income: 0,
+                expense: 0,
+                lastBalance: data.lastBalance,
+            };
             while (currentReport = data.reports.pop()) {
                 if (prevReport) {
                     if (prevReport.category != currentReport.category) {
@@ -531,6 +528,7 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
                             reportObject(prevReport.type, '', '',
                                          typeBudget, typeCurrent, typeLast)
                         )
+                        summary.expense = typeCurrent; // Ugly but based on API's behavior
                         typeBudget = 0;
                         typeCurrent = 0;
                         typeLast = 0;
@@ -562,10 +560,12 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
                     reportObject(prevReport.type, '', '',
                                  typeBudget, typeCurrent, typeLast)
                 );
+                summary.income = typeCurrent; // Ugly but based on API's behavior
             }
 
             $scope.reports = reports;
             $scope.year = year;
+            $scope.summary = summary;
         })
         .error(function(data, status, headers, config) {
         });

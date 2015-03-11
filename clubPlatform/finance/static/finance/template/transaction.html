@@ -45,17 +45,17 @@
         </td>
         <td class="align-right">
             <a href="#" ng-click="showTransactionDetail(transaction.id)">
-                {{ transaction.income }}
+                {{ transaction.income | number }}
             </a>
         </td>
         <td class="align-right">
             <a href="#" ng-click="showTransactionDetail(transaction.id)">
-                {{ transaction.expense }}
+                {{ transaction.expense | number }}
             </a>
         </td>
         <td class="align-right">
             <a href="#" ng-click="showTransactionDetail(transaction.id)">
-                {{ transaction.total }}
+                {{ transaction.total | number }}
             </a>
         </td>
         <td class="align-center">

@@ -131,10 +131,15 @@ def reportYear(request, year):
             'last': 0
         })
 
+    lastBalance = Transaction.objects.filter(
+        date__lt = datetime(int(year), 1, 1)
+    ).aggregate(total=Sum('amount'))['total']
+
     context = {
         'user': request.user,
         'year': year,
         'reports': reports,
+        'lastBalance': lastBalance if lastBalance != None else 0
     }
     return render(request, 'finance/api/v1/report.html', context)
 
@@ -165,10 +170,15 @@ def reportYearMonth(request, year, month):
             'last': transaction_last if transaction_last != None else 0
         })
 
+    lastBalance = Transaction.objects.filter(
+        date__lt = datetime(int(year), int(month), 1)
+    ).aggregate(total=Sum('amount'))['total']
+
     context = {
         'user': request.user,
         'year': year,
         'reports': reports,
+        'lastBalance': lastBalance
     }
     return render(request, 'finance/api/v1/report.html', context)
 

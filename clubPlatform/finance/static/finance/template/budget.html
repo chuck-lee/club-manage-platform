@@ -24,14 +24,14 @@
         </td>
 
         <td class="align-right" ng-if="budget.id">
-            <a href="#" ng-click="showBudgetDetail(budget.id)">{{ budget.amount }}</a>
+            <a href="#" ng-click="showBudgetDetail(budget.id)">{{ budget.amount | number }}</a>
         </td>
         <td class="align-right" ng-if="!budget.id">
-            {{ budget.amount }}
+            {{ budget.amount | number }}
         </td>
 
-        <td class="align-right">{{ budget.last_transaction }}</td>
-        <td class="align-right">{{ budget.last_budget }}</td>
+        <td class="align-right">{{ budget.last_transaction | number }}</td>
+        <td class="align-right">{{ budget.last_budget | number }}</td>
     </tr>
     </table>
 </div>

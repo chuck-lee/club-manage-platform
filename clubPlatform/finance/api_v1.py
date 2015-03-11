@@ -117,17 +117,18 @@ def reportYear(request, year):
     ).order_by('-type')
     reports = []
     for budget in budgets:
-        transaction_amount = Transaction.objects.filter(
+        transaction_total = Transaction.objects.filter(
             date__year = int(year),
             budget = budget,
-        ).aggregate(amount=Sum('amount'))['amount']
+        ).aggregate(total=Sum('amount'))['total']
 
         reports.append({
             'type': '收入' if budget.type == 1 else '支出',
             'category': budget.subCategory.category.name,
             'subCategory': budget.subCategory.name,
             'budget': budget.amount,
-            'transaction': transaction_amount if transaction_amount != None else 0,
+            'current': transaction_total if transaction_total != None else 0,
+            'last': 0
         })
 
     context = {
@@ -135,7 +136,41 @@ def reportYear(request, year):
         'year': year,
         'reports': reports,
     }
-    return render(request, 'finance/api/v1/reportYear.html', context)
+    return render(request, 'finance/api/v1/report.html', context)
+
+def reportYearMonth(request, year, month):
+    budgets = Budget.objects.filter(
+        year = int(year)
+    ).order_by('-type')
+    reports = []
+    for budget in budgets:
+        transaction_current = Transaction.objects.filter(
+            date__year = int(year),
+            date__month = int(month),
+            budget = budget,
+        ).aggregate(total=Sum('amount'))['total']
+
+        transaction_last = Transaction.objects.filter(
+            date__year = int(year),
+            date__lt = datetime(int(year), int(month), 1),
+            budget = budget,
+        ).aggregate(total=Sum('amount'))['total']
+
+        reports.append({
+            'type': '收入' if budget.type == 1 else '支出',
+            'category': budget.subCategory.category.name,
+            'subCategory': budget.subCategory.name,
+            'budget': budget.amount,
+            'current': transaction_current if transaction_current != None else 0,
+            'last': transaction_last if transaction_last != None else 0
+        })
+
+    context = {
+        'user': request.user,
+        'year': year,
+        'reports': reports,
+    }
+    return render(request, 'finance/api/v1/report.html', context)
 
 def budgetDetail(request, id):
     if request.method == "GET":

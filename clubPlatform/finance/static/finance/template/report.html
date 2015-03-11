@@ -1,14 +1,18 @@
 <div>
     <table border="2" cellspacing="0" frame="box" rules="all" id="budgetTable">
     <tr>
-        <th colspan="7" class="align-center">{{ year }}年收支報表</th>
+        <th colspan="{{ month > 0 ? 9 : 7}}" class="align-center">{{ year }}年
+        <select ng-model="month" ng-options="m.id as m.value for m in [{id:0,value:'全年'},{id:1,value:'一月'},{id:2,value:'二月'},{id:3,value:'三月'},{id:4,value:'四月'},{id:5,value:'五月'},{id:6,value:'六月'},{id:7,value:'七月'},{id:8,value:'八月'},{id:9,value:'九月'},{id:10,value:'十月'},{id:11,value:'十一月'},{id:12,value:'十二月'}]"></select>
+        收支報表</th>
     </tr>
     <tr>
         <th class="align-center">收支</th>
         <th class="align-center">科</th>
         <th class="align-center">目</th>
         <th class="align-center">預算金額</th>
-        <th class="align-center">累計執行</th>
+        <th class="align-center" ng-if="month > 0">本期金額</th>
+        <th class="align-center" ng-if="month > 0">前期累積</th>
+        <th class="align-center">累積執行</th>
         <th class="align-center">預算餘額</th>
         <th class="align-center">執行率</th>
     </tr>
@@ -17,7 +21,9 @@
         <td class="align-center">{{ report.category }}</td>
         <td class="align-center">{{ report.subCategory }}</td>
         <td class="align-right">{{ report.budget }}</td>
-        <td class="align-right">{{ report.transaction }}</td>
+        <td class="align-right" ng-if="month > 0">{{ report.current }}</td>
+        <td class="align-right" ng-if="month > 0">{{ report.last }}</td>
+        <td class="align-right">{{ report.total }}</td>
         <td class="align-right">{{ report.remain }}</td>
         <td class="align-right">{{ report.exeRate }}</td>
     </tr>

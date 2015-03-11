@@ -7,7 +7,8 @@
             "category": "{{ report.category }}",
             "subCategory": "{{ report.subCategory }}",
             "budget": {{ report.budget }},
-            "transaction": {{ report.transaction }}
+            "current": {{ report.current }},
+            "last": {{ report.last }}
         }{% if not forloop.last %},{% endif %}
     {% endfor %}
     ]

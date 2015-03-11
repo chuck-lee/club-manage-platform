@@ -479,78 +479,96 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
 }
 
 function reportController($scope, $http, $stateParams, $modal, $state, year) {
-    function reportObject(type, category, subCategory, budget, transaction) {
+    function reportObject(type, category, subCategory, budget, current, last) {
+        var total = current + last;
         return {
             type: type,
             category: category,
             subCategory:subCategory,
             budget: commalizeValue(budget),
-            transaction: commalizeValue(transaction),
-            remain: commalizeValue(budget - transaction),
-            exeRate: percentlizeValue(budget ? transaction / budget : 0)
+            current: commalizeValue(current),
+            last: commalizeValue(last),
+            total: commalizeValue(total),
+            remain: commalizeValue(budget - total),
+            exeRate: percentlizeValue(budget ? total / budget : 0)
         };
     }
 
-    $http.get('api/v1/report/' + year)
-    .success(function(data, status, headers, config) {
-        var reports = [];
+    $scope.month = 0;
 
-        var categoryBudget = 0,
-            categoryTransaction = 0;
-        var typeBudget = 0,
-            typeTransaction = 0;
-        var prevReport = null;
-        var currentReport = null;
-        while (currentReport = data.reports.pop()) {
-            if (prevReport) {
-                if (prevReport.category != currentReport.category) {
-                    reports.unshift(
-                        reportObject('', prevReport.category, '',
-                                     categoryBudget, categoryTransaction)
-                    )
-                    categoryBudget = 0;
-                    categoryTransaction = 0;
+    $scope.$watch("month", function(newMonth, oldMonth) {
+        var url = 'api/v1/report/' + year;
+        if ($scope.month != 0) {
+            url += '/' + $scope.month;
+        }
+
+        $http.get(url)
+        .success(function(data, status, headers, config) {
+            var reports = [];
+
+            var categoryBudget = 0,
+                categoryCurrent = 0,
+                categoryLast = 0;
+            var typeBudget = 0,
+                typeCurrent = 0,
+                typeLast = 0;
+            var prevReport = null;
+            var currentReport = null;
+            while (currentReport = data.reports.pop()) {
+                if (prevReport) {
+                    if (prevReport.category != currentReport.category) {
+                        reports.unshift(
+                            reportObject('', prevReport.category, '',
+                                         categoryBudget, categoryCurrent, categoryLast)
+                        )
+                        categoryBudget = 0;
+                        categoryCurrent = 0;
+                        categoryLast = 0
+                    }
+
+                    if (prevReport.type != currentReport.type) {
+                        reports.unshift(
+                            reportObject(prevReport.type, '', '',
+                                         typeBudget, typeCurrent, typeLast)
+                        )
+                        typeBudget = 0;
+                        typeCurrent = 0;
+                        typeLast = 0;
+                    }
                 }
 
-                if (prevReport.type != currentReport.type) {
-                    reports.unshift(
-                        reportObject(prevReport.type, '', '',
-                                     typeBudget, typeTransaction)
-                    )
-                    typeBudget = 0;
-                    typeTransaction = 0;
-                }
+                reports.unshift(
+                    reportObject('', '', currentReport.subCategory,
+                                 currentReport.budget, currentReport.current, currentReport.last)
+                );
+
+                categoryBudget += currentReport.budget;
+                categoryCurrent += currentReport.current;
+                categoryLast += currentReport.last;
+
+                typeBudget += currentReport.budget;
+                typeCurrent += currentReport.current;
+                typeLast += currentReport.last;
+
+                prevReport = currentReport;
             }
 
-            reports.unshift(
-                reportObject('', '', currentReport.subCategory,
-                             currentReport.budget, currentReport.transaction)
-            );
+            if (prevReport) {
+                reports.unshift(
+                    reportObject('', prevReport.category, '',
+                                 categoryBudget, categoryCurrent, categoryLast)
+                );
+                reports.unshift(
+                    reportObject(prevReport.type, '', '',
+                                 typeBudget, typeCurrent, typeLast)
+                );
+            }
 
-            categoryBudget += currentReport.budget;
-            categoryTransaction += currentReport.transaction;
-
-            typeBudget += currentReport.budget;
-            typeTransaction += currentReport.transaction;
-
-            prevReport = currentReport;
-        }
-
-        if (prevReport) {
-            reports.unshift(
-                reportObject('', prevReport.category, '',
-                             categoryBudget, categoryTransaction)
-            );
-            reports.unshift(
-                reportObject(prevReport.type, '', '',
-                             prevReport.budget, prevReport.transaction)
-            );
-        }
-
-        $scope.reports = reports;
-        $scope.year = year;
-    })
-    .error(function(data, status, headers, config) {
+            $scope.reports = reports;
+            $scope.year = year;
+        })
+        .error(function(data, status, headers, config) {
+        });
     });
 }
 

@@ -22,6 +22,16 @@ def availableYears(request):
     }
     return render(request, 'finance/api/v1/availableYears.html', context)
 
+def payees(request):
+    if not (request.user.has_perm('finance.add_transaction') or request.user.has_perm('finance.change_transaction')) :
+            raise PermissionDenied;
+
+    context = {
+        'payees': User.objects.all()
+    }
+
+    return render(request, 'finance/api/v1/payees.html', context)
+
 def category(request):
     context = {
         'user': request.user,
@@ -327,6 +337,106 @@ def subCategoryDetail(request, id):
             raise SuspiciousOperation()
 
         subCategory.delete()
+
+        return HttpResponse()
+
+    return HttpResponseNotFound()
+
+def transactionDetail(request, id):
+    if request.method == "GET":
+        # Get
+        try:
+            transaction = Transaction.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        context = {
+            'user': request.user,
+            'id': id,
+            'transaction': transaction
+        }
+
+        return render(request, 'finance/api/v1/transactionDetail.html', context)
+    elif request.method == "POST":
+        # Create
+        if not request.user.has_perm('finance.add_transaction'):
+            raise PermissionDenied;
+
+        param = json.loads(request.body.decode("utf-8"))
+
+        try:
+            budget = Budget.objects.get(pk = param['budgetId'])
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        payee = None
+        if 'payeeId' in param:
+            try:
+                payee = User.objects.get(pk = param['payeeId'])
+            except ObjectDoesNotExist:
+                payee = None
+
+        transaction = Transaction(date = param['date'],
+                                  documentSerial = param['serial'] if 'serial' in param else '',
+                                  budget = budget,
+                                  amount = param['amount'],
+                                  payee = payee,
+                                  submitBy = request.user,
+                                  comment = param['comment'] if 'comment' in param else ''
+                      )
+        transaction.save()
+
+        return HttpResponse()
+    elif request.method == "PUT":
+        # Update
+        if not request.user.has_perm('finance.change_transaction'):
+            raise PermissionDenied;
+
+        param = json.loads(request.body.decode("utf-8"))
+
+        try:
+            transaction = Transaction.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        # Only submiter can change submiited item
+        if transaction.submitBy != request.user:
+            raise PermissionDenied;
+
+        try:
+            budget = Budget.objects.get(pk = param['budgetId'])
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        payee = None
+        if 'payeeId' in param:
+            try:
+                payee = User.objects.get(pk = param['payeeId'])
+            except ObjectDoesNotExist:
+                payee = None
+
+        transaction.date = param['date']
+        if 'serial' in param:
+            transaction.documentSerial = param['serial']
+        transaction.budget = budget
+        transaction.amount = param['amount']
+        transaction.payee = payee
+        if 'comment' in param:
+            transaction.comment = param['comment']
+        transaction.save()
+        return HttpResponse()
+    elif request.method == "DELETE":
+        # Delete
+        if not request.user.has_perm('finance.delete_transaction'):
+            raise PermissionDenied;
+            return;
+
+        try:
+            transaction = Transaction.objects.get(pk = id)
+        except ObjectDoesNotExist:
+            raise SuspiciousOperation()
+
+        transaction.delete()
 
         return HttpResponse()
 

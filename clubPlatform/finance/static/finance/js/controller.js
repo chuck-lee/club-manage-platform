@@ -30,7 +30,7 @@ function transactionController($scope, $http, $stateParams, $modal, $state, year
 
         $scope.previousAmount = commalizeValue(total);
 
-        for (var i = 1; i < transactions.length; i++) {
+        for (var i = 0; i < transactions.length; i++) {
             amount = transactions[i].amount;
             total += amount;
             transactions[i].total = commalizeValue(total);
@@ -41,6 +41,185 @@ function transactionController($scope, $http, $stateParams, $modal, $state, year
     })
     .error(function(data, status, headers, config) {
     });
+
+    $scope.showTransactionDetail = function(transactionId) {
+        $modal.open({
+            templateUrl: '/static/finance/template/transactionDetail.html',
+            controller: ['$scope', '$http', '$modalInstance', 'transactionId',
+                function ($scope, $http, $modalInstance, transactionId) {
+                    $scope.$watch("date", function(newDate, oldDate) {
+                        if (!newDate) {
+                            return;
+                        }
+                        newDate = newDate.split('-');
+                        newYear = new Date(parseInt(newDate[0], 10),
+                                           parseInt(newDate[1], 10) - 1,
+                                           parseInt(newDate[2])).getFullYear();
+                        oldYear = 0;
+                        if (oldDate) {
+                            oldDate = oldDate.split('-');
+                            oldYear = new Date(parseInt(oldDate[0], 10),
+                                               parseInt(oldDate[1], 10) - 1,
+                                               parseInt(oldDate[2])).getFullYear();
+                        }
+
+                        if (newYear && newYear != oldYear) {
+                            $http.get('api/v1/budget/' + newYear)
+                            .success(function(data, status, headers, config) {
+                                $scope.budgets = data.budgets;
+                            })
+                            .error(function(data, status, headers, config) {
+                            });
+                        }
+                    });
+
+                    $http.get('api/v1/payees')
+                    .success(function(data, status, headers, config) {
+                        $scope.payees = data.payees;
+
+                        $http.get('api/v1/transactionDetail/' + transactionId + '/')
+                        .success(function(data, status, headers, config) {
+                            $scope.id = data.id;
+                            $scope.date = data.date;
+                            $scope.serial = data.serial;
+                            $scope.payeeId = data.payeeId;
+                            $scope.amount = data.amount;
+                            $scope.comment = data.comment;
+                            budgetId = data.budgetId;
+
+                            $http.get('api/v1/budget/' + $scope.date.split('-')[0])
+                            .success(function(data, status, headers, config) {
+                                $scope.budgets = data.budgets;
+                                $scope.budgetId = budgetId;
+                            })
+                            .error(function(data, status, headers, config) {
+                            });
+                        })
+                        .error(function(data, status, headers, config) {
+                        });
+                    })
+                    .error(function(data, status, headers, config) {
+                    });
+
+                    $scope.modify = function() {
+                        $http.put('api/v1/transactionDetail/' + transactionId + '/', {
+                            'date': $scope.date,
+                            'serial': $scope.serial,
+                            'budgetId': $scope.budgetId,
+                            'payeeId': $scope.payeeId,
+                            'amount': $scope.amount,
+                            'comment': $scope.comment
+                        })
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.delete = function() {
+                        $http.delete('api/v1/transactionDetail/' + transactionId + '/')
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss($scope.id);
+                    }
+            }],
+            resolve: {
+                transactionId: function() {
+                    return transactionId;
+                }
+            }
+        });
+    }
+
+    $scope.addTransaction = function() {
+        $modal.open({
+            templateUrl: '/static/finance/template/addTransaction.html',
+            controller: ['$scope', '$http', '$modalInstance',
+                function ($scope, $http, $modalInstance) {
+                    $scope.$watch("date", function(newDate, oldDate) {
+                        if (!newDate) {
+                            return;
+                        }
+                        newDate = newDate.split('-');
+                        newYear = new Date(parseInt(newDate[0], 10),
+                                           parseInt(newDate[1], 10) - 1,
+                                           parseInt(newDate[2])).getFullYear();
+                        oldYear = 0;
+                        if (oldDate) {
+                            oldDate = oldDate.split('-');
+                            oldYear = new Date(parseInt(oldDate[0], 10),
+                                               parseInt(oldDate[1], 10) - 1,
+                                               parseInt(oldDate[2])).getFullYear();
+                        }
+
+                        if (newYear && newYear != oldYear) {
+                            $http.get('api/v1/budget/' + newYear)
+                            .success(function(data, status, headers, config) {
+                                $scope.budgets = data.budgets;
+                            })
+                            .error(function(data, status, headers, config) {
+                            });
+                        }
+                    });
+
+                    today = new Date;
+                    $scope.amount = 0
+                    $scope.date = year + "-" +
+                                  (today.getMonth() + 1) + "-" +
+                                  today.getDate();
+
+                    $http.get('api/v1/budget/' + year)
+                    .success(function(data, status, headers, config) {
+                        $scope.budgets = data.budgets;
+
+                        $http.get('api/v1/payees')
+                        .success(function(data, status, headers, config) {
+                            $scope.payees = data.payees;
+                        })
+                        .error(function(data, status, headers, config) {
+                        });
+                    })
+                    .error(function(data, status, headers, config) {
+                    });
+
+                    $scope.add = function() {
+                        $http.post('api/v1/transactionDetail/0/', {
+                            'date': $scope.date,
+                            'serial': $scope.serial,
+                            'budgetId': $scope.budgetId,
+                            'payeeId': $scope.payeeId,
+                            'amount': $scope.amount,
+                            'comment': $scope.comment
+                        })
+                        .success(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        })
+                        .error(function() {
+                            $state.reload();
+                            $modalInstance.dismiss($scope.id);
+                        });
+                    }
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss();
+                    }
+            }]
+        });
+    };
 }
 
 function budgetController($scope, $http, $stateParams, $modal, $state, year) {
@@ -219,8 +398,6 @@ function budgetController($scope, $http, $stateParams, $modal, $state, year) {
                     .success(function(data, status, headers, config) {
                         $scope.subCategorys = data.subCategorys;
                         $scope.year = year;
-                        //$scope.budgetType = 1;
-                        //$scope.subCategoryId = data.subCategoryId;
                         $scope.amount = 0;
                     })
                     .error(function(data, status, headers, config) {
@@ -316,7 +493,7 @@ function reportController($scope, $http, $stateParams, $modal, $state, year) {
                              categoryBudget, categoryTransaction)
             );
             reports.unshift(
-                reportObject('', '', prevReport.subCategory,
+                reportObject(prevReport.type, '', '',
                              prevReport.budget, prevReport.transaction)
             );
         }

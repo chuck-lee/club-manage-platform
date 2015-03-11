@@ -1,0 +1,13 @@
+{
+    "id": {{ id }},
+    "date": "{{ transaction.date.year }}-{{ transaction.date.month }}-{{ transaction.date.day }}",
+    "serial": "{{ transaction.documentSerial }}",
+    "budgetId": {{ transaction.budget.id }},
+    {% if transaction.payee %}
+    "payeeId": {{ transaction.payee.id }},
+    {% else %}
+    "payeeId": 0,
+    {% endif %}
+    "amount": {{ transaction.amount }},
+    "comment": "{{ transaction.comment }}"
+}

@@ -19,7 +19,7 @@
         <tr>
             <th class="align-center">科目</th>
             <td class="align-right">
-                <select ng-model="subCategoryId" ng-options="subCategory.id as subCategory.name for subCategory in subCategorys"></select>
+                <select ng-model="subCategoryId" ng-options="subCategory.id as (subCategory.categoryName + ' - ' + subCategory.name) for subCategory in subCategorys"></select>
             </td>
         </tr>
         <tr>

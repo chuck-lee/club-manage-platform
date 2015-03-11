@@ -1,0 +1,10 @@
+{
+    "payees": [
+    {% for payee in payees %}
+        {
+            "id": {{ payee.id }},
+            "name": "{{ payee.first_name }}"
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

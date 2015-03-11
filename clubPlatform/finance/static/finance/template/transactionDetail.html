@@ -1,0 +1,50 @@
+<div>
+    <div class="modal-header">
+        <h3 class="modal-title">收支</h3>
+    </div>
+    <div class="modal-body">
+        <table border="2" cellspacing="0" frame="box" rules="all" id="transactionDetailTable">
+        <tr>
+            <th class="align-center">日期</th>
+            <td class="align-right">
+                <input ng-model="date" class="align-right" type="text" value="{{ date }}">
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">票據編號</th>
+            <td class="align-right">
+                <input ng-model="serial" class="align-right" type="text" value="{{ serial }}">
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">預算科目</th>
+            <td class="align-right">
+                <select ng-model="budgetId" ng-options="budget.id as ('(' + budget.type + ') ' + budget.categoryName + ' - ' + budget.subCategoryName) for budget in budgets"></select>
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">總額</th>
+            <td class="align-right">
+                <input ng-model="amount" class="align-right" type="text" value="{{ amount }}">
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">對象</th>
+            <td class="align-right">
+                <select ng-model="payeeId" ng-options="payee.id as payee.name for payee in payees"></select>
+            </td>
+        </tr>
+        <tr>
+            <th class="align-center">附註</th>
+            <td class="align-right">
+                <input ng-model="comment" class="align-right" type="text" value="{{ comment }}">
+            </td>
+        </tr>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="modify()">修改</button>
+        <button class="btn btn-warning" ng-click="delete()">刪除</button>
+        <button class="btn btn-warning" ng-click="cancel()">取消</button>
+    </div>
+</div>
